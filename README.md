@@ -1,6 +1,7 @@
 # HiC_spectra
 
-A few functions used to define the distance/reproducibility of two HiC matrices.
+A matrix library for spectral analysis and reproducilbilty of Hi-C contact maps.
+
 
 
 
