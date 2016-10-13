@@ -3,7 +3,8 @@ using JLD;
 using MAT;
 #using Graphs;
 using DataFrames;
-#using CurveFit;
+using CurveFit;
+using Loess;
 #using Distributions;
 
 #do power-iteration 
@@ -231,9 +232,69 @@ function extend_mat(Z,iz,L);
     return Z_extend;
 end
 
-#what should we used? f_W? or E_W?
-#use correlation matrix?
-#the effect of 1st ev is much stronger than the rest...
+#for simplicity, we provide the distance dependence for an individual chromsome, not the genome-wide version
+function get_expect_vs_d_single_chr(W,chr2bins,bin_size);
+
+	W=full(W);
+	W[isnan(W)]=0;
+	dark_bins=find(sum(W,1).==0);
+	N=size(W,1);
+	f_d=zeros(N);
+	tt_d=zeros(N);
+
+	(u,v,w)=findnz(triu(W));
+	d=float(v-u);
+	d2=float(d);
+	d2[d2.==0]=1/3;#this is the average distance for 2 points drawn from an uniform distribution between [0.1];
+	d3=d2*bin_size;
+
+	model = loess(log10(d3),log10(w),span=0.01);#not sure...its effect..
+
+	#tmp=linear_fit(log10(d3),log10(w));
+	#gamma=tmp[2];
+	#K=10^tmp[1];
+
+	xs=collect(0:1.0:maximum(d2));xs[1]=1/3;
+	xs=log10(xs*bin_size);
+	ys=Loess.predict(model,xs);
+
+	xs=collect(0:1.0:size(W,1)-1);xs[1]=1/3;
+	xs=xs*bin_size;
+	ys=[ys;zeros(size(W,1)-length(ys))];
+	ys=10.^ys;
+
+	return d2,w,xs,ys;
+	#if one wants to get the genome-wide dependence, collect all d2 and w for each chr, and do the loess fit again..
+
+end
+
+function get_f_W(W,ys);
+
+	N=size(W,1);
+	W[isnan(W)]=0;
+	dark_bins=find(sum(W,1).==0);
+	num_dark=length(dark_bins);
+	N_eff=N-num_dark;
+	f_W=zeros(size(W));#what's f_W? it's a generation of ones(size(W));
+
+	x=collect(1:N);
+
+	for d=0:N-1
+		f_W[1+d:N+1:end-d*N]=ys[d+1];
+	end
+	tmp=f_W-diagm(diag(f_W));
+	f_W=f_W+tmp';
+	#sum(f_W[1,:])=1 here..
+
+	f_W[dark_bins,:]=0;
+	f_W[:,dark_bins]=0;
+	f_W=f_W/sum(f_W)*N_eff.^2;
+
+	return f_W;
+
+end
+
+
 function get_compartment_A_B(W,f_W);
 
 	iz=find(sum(W,2).>0);
@@ -248,8 +309,9 @@ function get_compartment_A_B(W,f_W);
 	ev_whole[izz,:]=NaN;
 
 	(loc,span)=get_chunks_v2(sign(ev_whole[:,1]),1);#
+	cpt=sign(ev_whole[loc,1]);
 
-	return ev_whole,loc,span;
+	return loc,span,ev_whole,cpt;
 
 end
 
@@ -274,6 +336,38 @@ function generate_arbitrary_mapping_files(bin_size);
 	return round(Int64,chr2bins),round(Int64,bin2loc);
 	
 end
+
+
+#id is the starting loc of a chunk, and d is the length it spans..
+function get_chunks_v2(a,singleton=0);
+	# adopt from a matlab code by Jiro Doke;
+	 a                 = [NaN; a; NaN];
+	 b                 = diff(a);
+	 b1                = b;  # to be used in fullList (below)
+	 ii                = trues(size(b));
+	 ii[b.==0] = false;
+	 b[ii]             = 1;
+	 c                 = diff(b);
+	 id                = find(c.==-1);
+
+	 #Get single-element chunks also
+	 if singleton.==1
+	 	b1[id]          = 0;
+	 	ii2             = find(b1[1:end-1]);
+	 	d               = vcat(find(c.==1) - id + 1, ones(length(ii2)));
+	 	id              = [id;ii2];
+	 	v=sortperm(id);
+	 	id=sort(id);
+	 	#(id,tmp)        = sort(id);
+	 	d               = d[v];
+	 else 
+	 	d               = find(c.==1) - id + 1;
+	 end
+
+	 return id,d;
+end
+
+
 
 function define_chr_size();
 	chr_length=zeros(Int,25,1);
