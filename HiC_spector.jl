@@ -4,13 +4,12 @@ using MAT;
 #using Graphs;
 using DataFrames;
 using CurveFit;
-using Loess;
+#using Loess;
 #using Distributions;
 
 #do power-iteration 
 #for compartment, is ICED better in genera?
 #can do we a few ipr analysis for leading ev..
-
 
 function read_contact_map(input_file,chr_num,bin_size);
 	#input is a 5 col. file with chr, pos, and contacts	
@@ -147,6 +146,7 @@ end
 
 function knight_ruiz(M);
 #adapted from the MATLAB code implemented in Knight and Ruiz, 
+	M[ianan(M)]=0;
 	L=size(M,1);
 	iz=find(sum(M,2).>0);
 	A=M[iz,iz];
@@ -248,25 +248,133 @@ function get_expect_vs_d_single_chr(W,chr2bins,bin_size);
 	d2[d2.==0]=1/3;#this is the average distance for 2 points drawn from an uniform distribution between [0.1];
 	d3=d2*bin_size;
 
-	model = loess(log10(d3),log10(w),span=0.01);#not sure...its effect..
+	#model = loess(log10(d3),log10(w),span=0.01);
+	#the loess fct is rather slow, and fail to work at some matrices (not sure why), we have replaced it by a simpler method
 
-	#tmp=linear_fit(log10(d3),log10(w));
-	#gamma=tmp[2];
-	#K=10^tmp[1];
+	x=log10(d3);
+	y=log10(w);
 
-	xs=collect(0:1.0:maximum(d2));xs[1]=1/3;
-	xs=log10(xs*bin_size);
-	ys=Loess.predict(model,xs);
+	xs,ys_smooth=local_smnoothing(x,y);
 
-	xs=collect(0:1.0:size(W,1)-1);xs[1]=1/3;
-	xs=xs*bin_size;
-	ys=[ys;zeros(size(W,1)-length(ys))];
-	ys=10.^ys;
+	xs_all=collect(0:1.0:size(W,1)-1);xs_all[1]=1/3;
+	xs_all=xs_all*bin_size;
+	xs_all_aux=log10(xs_all);
 
-	return d2,w,xs,ys;
-	#if one wants to get the genome-wide dependence, collect all d2 and w for each chr, and do the loess fit again..
+	ys_all=zeros(size(xs_all));
+	for k=1:length(xs_all_aux);
+		ik=find(xs.==xs_all_aux[k]);
+		if ~isempty(ik)
+			ys_all[k]=ys_smooth[ik][1];
+		end
+	end	
+
+	A_x=find(ys_all.>0);
+	knots=(A_x,);
+	itp=interpolate(knots,ys_smooth, Gridded(Linear()));
+
+	A_nz=find(ys_all.==0);
+	for i=1:length(A_nz);
+		ys_all[A_nz[i]]=itp[A_nz[i]];
+	end
+
+	expect=10.^ys_all;
+
+	return xs_all, expect;
 
 end
+
+function local_smnoothing(x,y);
+	
+	span=0.01;
+	v=sortperm(x);
+	x=x[v];
+	y=y[v];
+	ux=unique(x);
+	uy_smooth=zeros(size(ux));
+	n=Int(floor(length(x)*span/2));
+
+	mm=zeros(size(x));
+	L=2*n+1;
+	i=n+1;
+	st=1;
+	ed=i+n;
+	mm[i]=mean(y[st:ed]);
+	for i=n+2:length(y)-n;
+		#display(i);
+    	ed=ed+1;
+    	mm[i]=mm[i-1]+y[ed]/L-y[st]/L;
+	    st=st+1;
+	end
+	for i=1:n
+    	mm[i]=mean(y[1:n+i]);
+	end
+	for i=1:n;
+    	mm[end-n+i]=mean(y[end-n+1-n+i:end]);
+	end
+
+	for i=1:length(ux);
+    	iz=find(x.==ux[i]);
+    	uy_smooth[i]=mean(mm[iz]);
+	end
+   
+	return ux,uy_smooth;
+end
+
+function get_expect_vs_d_WG(contact,chr2bins,bin_size);
+
+	all_d2=Float64[];
+	all_w=Float64[];
+	Ltmp=zeros(23);
+	for chr_num=1:23
+		#display(chr_num);
+		W=extract_chr(contact,chr2bins,chr_num);
+		W=full(W);
+		W[isnan(W)]=0;
+		(u,v,w)=findnz(triu(W));
+		d=float(v-u);
+		d2=float(d);
+		d2[d2.==0]=1/3;# the average distance for 2 points drawn from an uniform distribution between [0.1];
+		all_d2=[all_d2;d2];
+		all_w=[all_w;w];
+		Ltmp[chr_num]=size(W,1);
+	end
+
+	all_d3=all_d2*bin_size;
+	x=log10(all_d3);
+	y=log10(all_w);
+
+	xs,ys_smooth=local_smnoothing(x,y);
+
+	xs_all=collect(0:1.0:maximum(Ltmp)-1);xs_all[1]=1/3;
+	xs_all=xs_all*bin_size;
+	xs_all_aux=log10(xs_all);
+
+	ys_all=zeros(size(xs_all));
+	for k=1:length(xs_all_aux);
+		ik=find(xs.==xs_all_aux[k]);
+		if ~isempty(ik)
+			ys_all[k]=ys_smooth[ik][1];
+		end
+	end	
+
+	A_x=find(ys_all.>0);
+	knots=(A_x,);
+	itp=interpolate(knots,ys_smooth, Gridded(Linear()));
+
+	A_nz=find(ys_all.==0);
+	for i=1:length(A_nz);
+		ys_all[A_nz[i]]=itp[A_nz[i]];
+	end
+
+	expect=10.^ys_all;
+
+	return xs_all, expect;
+
+end
+
+#to find distance dependence, we should NOT iced the chr one by one.
+#because in genome-wide scale dependance, we should keep the contacts in same base
+#for individual genome dependence, may be ice ot not both ok, but the difference is maginal, cor=0.99
 
 function get_f_W(W,ys);
 
