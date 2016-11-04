@@ -4,8 +4,9 @@ using MAT;
 #using Graphs;
 using DataFrames;
 using CurveFit;
+using Interpolations;
 #using Loess;
-#using Distributions;
+#using Distributions;:
 
 #do power-iteration 
 #for compartment, is ICED better in genera?
@@ -146,7 +147,7 @@ end
 
 function knight_ruiz(M);
 #adapted from the MATLAB code implemented in Knight and Ruiz, 
-	M[ianan(M)]=0;
+	M[isnan(M)]=0;
 	L=size(M,1);
 	iz=find(sum(M,2).>0);
 	A=M[iz,iz];
@@ -235,12 +236,112 @@ end
 #for simplicity, we provide the distance dependence for an individual chromsome, not the genome-wide version
 function get_expect_vs_d_single_chr(W,chr2bins,bin_size);
 
+	#unlike the previous version, we include all the pairs with 0 contact (but not dark) as data points..
+	#as there are 0 we can't take log, smoothing ae done in linear scale.
+
 	W=full(W);
 	W[isnan(W)]=0;
 	dark_bins=find(sum(W,1).==0);
+
 	N=size(W,1);
-	f_d=zeros(N);
-	tt_d=zeros(N);
+	mmm=minimum(W[W.>0])/10;
+	
+	(u,v,w)=findnz(triu(W+mmm));
+	dark_u=[x in dark_bins for x in u];
+	dark_v=[x in dark_bins for x in v];
+
+	iz=find((1-dark_u).*(1-dark_v).>0);
+
+	u=u[iz];
+	v=v[iz];
+	w=w[iz]-mmm;
+
+	d=float(v-u);
+	d2=float(d);
+	d2[d2.==0]=1/3;#this is the average distance for 2 points drawn from an uniform distribution between [0.1];
+	d3=d2*bin_size;
+
+
+	#x=log10(d3);
+	#y=log10(w+mmm);
+
+	xs,ys_smooth=local_smnoothing(d2,w);
+	xs_aux=[round(i) for i in xs];
+	xs_aux[1]=1/3;
+
+	xs_all=collect(0:1.0:size(W,1)-1);xs_all[1]=1/3;
+	
+	ys_all=zeros(size(xs_all));
+	for k=1:length(xs_all);
+		ik=find(xs_aux.==xs_all[k]);
+		if ~isempty(ik)
+			ys_all[k]=ys_smooth[ik][1];
+		end
+	end	
+
+	A_x=find(ys_all.>0);
+	knots=(A_x,);
+	itp=interpolate(knots,ys_smooth, Gridded(Linear()));
+
+	A_nz=find(ys_all.==0);
+	for i=1:length(A_nz);
+		ys_all[A_nz[i]]=itp[A_nz[i]];
+	end
+
+	expect=ys_all;
+
+	return xs_all*bin_size, expect;
+
+end
+
+function local_smnoothing(x,y);
+	
+	span=0.01;
+	v=sortperm(x);
+	x=x[v];
+	y=y[v];
+	ux=unique(x);
+	uy_smooth=zeros(size(ux));
+	n=Int(floor(length(x)*span/2));
+
+	mm=zeros(size(x));
+	L=2*n+1;
+	i=n+1;
+	st=1;
+	ed=i+n;
+	mm[i]=mean(y[st:ed]);
+	for i=n+2:length(y)-n;
+		#display(i);
+    	ed=ed+1;
+    	mm[i]=mm[i-1]+y[ed]/L-y[st]/L;
+	    st=st+1;
+	end
+	for i=1:n
+    	mm[i]=mean(y[1:n+i]);
+	end
+	for i=1:n;
+    	mm[end-n+i]=mean(y[end-n+1-n+i:end]);
+	end
+
+	for i=1:length(ux);
+    	iz=find(x.==ux[i]);
+    	uy_smooth[i]=mean(mm[iz]);
+	end
+   
+	return ux,uy_smooth;
+
+end
+
+# this is an early version. it doesn't include all zeros...
+# but it seems that it's more conssitent with others do, like the compartment analysis in Stein2015
+# fitting is also a bit better..
+function get_expect_vs_d_single_chr_v0(W,chr2bins,bin_size);
+
+	W=full(W);
+	W[isnan(W)]=0;
+	
+	N=size(W,1);
+	
 
 	(u,v,w)=findnz(triu(W));
 	d=float(v-u);
@@ -283,63 +384,34 @@ function get_expect_vs_d_single_chr(W,chr2bins,bin_size);
 
 end
 
-function local_smnoothing(x,y);
-	
-	span=0.01;
-	v=sortperm(x);
-	x=x[v];
-	y=y[v];
-	ux=unique(x);
-	uy_smooth=zeros(size(ux));
-	n=Int(floor(length(x)*span/2));
-
-	mm=zeros(size(x));
-	L=2*n+1;
-	i=n+1;
-	st=1;
-	ed=i+n;
-	mm[i]=mean(y[st:ed]);
-	for i=n+2:length(y)-n;
-		#display(i);
-    	ed=ed+1;
-    	mm[i]=mm[i-1]+y[ed]/L-y[st]/L;
-	    st=st+1;
-	end
-	for i=1:n
-    	mm[i]=mean(y[1:n+i]);
-	end
-	for i=1:n;
-    	mm[end-n+i]=mean(y[end-n+1-n+i:end]);
-	end
-
-	for i=1:length(ux);
-    	iz=find(x.==ux[i]);
-    	uy_smooth[i]=mean(mm[iz]);
-	end
-   
-	return ux,uy_smooth;
-end
-
-function get_expect_vs_d_WG(contact,chr2bins,bin_size);
+function get_expect_vs_d_WG_v0(contact,chr2bins,bin_size);
 
 	all_d2=Float64[];
 	all_w=Float64[];
 	Ltmp=zeros(23);
 	for chr_num=1:23
+	
 		#display(chr_num);
 		W=extract_chr(contact,chr2bins,chr_num);
 		W=full(W);
 		W[isnan(W)]=0;
+
+		N=size(W,1);
+		
 		(u,v,w)=findnz(triu(W));
+		
 		d=float(v-u);
 		d2=float(d);
-		d2[d2.==0]=1/3;# the average distance for 2 points drawn from an uniform distribution between [0.1];
+		d2[d2.==0]=1/3;#this is the average distance for 2 points drawn from an uniform distribution between [0.1];
+		
 		all_d2=[all_d2;d2];
 		all_w=[all_w;w];
 		Ltmp[chr_num]=size(W,1);
+	
 	end
 
 	all_d3=all_d2*bin_size;
+
 	x=log10(all_d3);
 	y=log10(all_w);
 
@@ -372,9 +444,82 @@ function get_expect_vs_d_WG(contact,chr2bins,bin_size);
 
 end
 
+
+
+
+function get_expect_vs_d_WG(contact,chr2bins,bin_size);
+
+	all_d2=Float64[];
+	all_w=Float64[];
+	Ltmp=zeros(23);
+	for chr_num=1:23
+	
+		#display(chr_num);
+		W=extract_chr(contact,chr2bins,chr_num);
+		W=full(W);
+		W[isnan(W)]=0;
+
+		dark_bins=find(sum(W,1).==0);
+
+		N=size(W,1);
+		mmm=minimum(W[W.>0])/10;
+	
+		(u,v,w)=findnz(triu(W+mmm));
+		dark_u=[x in dark_bins for x in u];
+		dark_v=[x in dark_bins for x in v];
+
+		iz=find((1-dark_u).*(1-dark_v).>0);
+
+		u=u[iz];
+		v=v[iz];
+		w=w[iz]-mmm;
+
+		d=float(v-u);
+		d2=float(d);
+		d2[d2.==0]=1/3;#this is the average distance for 2 points drawn from an uniform distribution between [0.1];
+		d3=d2*bin_size;
+
+		all_d2=[all_d2;d2];
+		all_w=[all_w;w];
+		Ltmp[chr_num]=size(W,1);
+	
+	end
+
+	all_d3=all_d2*bin_size;
+
+	xs,ys_smooth=local_smnoothing(all_d2,all_w);
+
+	xs_aux=[round(i) for i in xs];
+	xs_aux[1]=1/3;
+
+	xs_all=collect(0:1.0:size(W,1)-1);xs_all[1]=1/3;
+	
+	ys_all=zeros(size(xs_all));
+	for k=1:length(xs_all);
+		ik=find(xs_aux.==xs_all[k]);
+		if ~isempty(ik)
+			ys_all[k]=ys_smooth[ik][1];
+		end
+	end	
+
+	A_x=find(ys_all.>0);
+	knots=(A_x,);
+	itp=interpolate(knots,ys_smooth, Gridded(Linear()));
+
+	A_nz=find(ys_all.==0);
+	for i=1:length(A_nz);
+		ys_all[A_nz[i]]=itp[A_nz[i]];
+	end
+
+	expect=ys_all;
+
+	return xs_all*bin_size, expect;
+
+end
+
 #to find distance dependence, we should NOT iced the chr one by one.
 #because in genome-wide scale dependance, we should keep the contacts in same base
-#for individual genome dependence, may be ice ot not both ok, but the difference is maginal, cor=0.99
+#for individual genome dependence, may be ice again ot not both ok, but the difference is maginal, cor=0.99
 
 function get_f_W(W,ys);
 
@@ -616,6 +761,5 @@ function change_chr(chr)
 	end
 	return chr2;
 end
-
 
 
