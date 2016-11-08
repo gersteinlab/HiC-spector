@@ -1,61 +1,9 @@
 using HDF5; 
 using JLD;
 using MAT;
-#using Graphs;
 using DataFrames;
 using CurveFit;
 using Interpolations;
-#using Loess;
-#using Distributions;:
-
-#do power-iteration 
-#for compartment, is ICED better in genera?
-#can do we a few ipr analysis for leading ev..
-
-function read_contact_map(input_file,chr_num,bin_size);
-	#input is a 5 col. file with chr, pos, and contacts	
-	chr_length=define_chr_size();
-	X=readtable(input_file,separator='\t',header=false);
-	chr2bins,bin2loc=generate_arbitrary_mapping_files(bin_size);
-	ib=find(bin2loc[1,:].==chr_num-1);
-	N=length(ib);
-	chr_string=change_chr(chr_num);
-	M=sparse(floor(Int64,X[iz,2]/bin_size)+1,floor(Int64,X[iz,4]/bin_size)+1,X[iz,5],N,N);
-	M=M+0;
-
-	return M;
-end
-
-
-function get_Laplacian(M);
-	K=vec(sum(M,1));
-	i_nz=find(K.>0);
-	D_nz=spdiagm(K[i_nz]);
-	D_isq=spdiagm(1./sqrt(K[i_nz]));
-	#L_nz=D_nz-M[i_nz,i_nz];
-	#the smallest ev of L is 0.
-	#in many networks, because of the existenc of singleton, we expect more than 1 zero ev..
-	#if we do normalization, 0=lambda1<=lambda_1<=lambda_2.,,,<=2
-
-	#to avoid matrix multiplication with 0, inf. actually
-	#L_norm(i,j)=1 if i=j
-	#L_norm(i,j)=-1/sqrt(deg(i)*deg(j)))
-	#0 otherwise.
-	Ln_nz=M[i_nz,i_nz]*D_isq;
-	Ln_nz=I-D_isq*Ln_nz;
-	n=size(M,1);
-	#Ln=extend_mat(Ln_nz,i_nz,n);
-	#check for Laplacian, K(v)-w(v,v) for diag, if 0, both 0..normalization goes to 1-0/0=0;
-	#r=collect(1:n);
-	#r=(r-1)*n+r;
-	#Ln[r[Ln[r].==0]]=1;
-	Ln_nz=(Ln_nz+Ln_nz')/2;
-	return Ln_nz;
-end
-
-function get_ipr(evec);
-	ipr=1./sum(evec.^4,1);
-end
 
 function get_reproducibility(M1,M2,num_evec);
 	
@@ -122,6 +70,37 @@ function get_reproducibility(M1,M2,num_evec);
 end
 
 
+
+function get_Laplacian(M);
+
+	K=vec(sum(M,1));
+	i_nz=find(K.>0);
+	D_nz=spdiagm(K[i_nz]);
+	D_isq=spdiagm(1./sqrt(K[i_nz]));
+	
+	#the smallest ev of L is 0.
+	#in many networks, because of the existenc of singleton, we expect more than 1 zero ev..
+	#if we do normalization, 0=lambda1<=lambda_1<=lambda_2.,,,<=2
+
+	#to avoid matrix multiplication with 0, inf. actually
+	#L_norm(i,j)=1 if i=j
+	#L_norm(i,j)=-1/sqrt(deg(i)*deg(j)))
+	#0 otherwise.
+
+	Ln_nz=M[i_nz,i_nz]*D_isq;
+	Ln_nz=I-D_isq*Ln_nz;
+	n=size(M,1);
+
+	Ln_nz=(Ln_nz+Ln_nz')/2;
+	return Ln_nz;
+end
+
+function get_ipr(evec);
+
+	ipr=1./sum(evec.^4,1);
+
+end
+
 function evec_distance(x,y);
 	#as x and y are normalized in the first place, sqrt(d) makes sense, no need to scale with n
 	d1=sum((x-y).^2);
@@ -135,6 +114,7 @@ function evec_distance(x,y);
 end
 
 function evec_similarity(x,y)
+
 	d=evec_distance(x,y);
 	max_d=sqrt(2);
 	#this is verified by simulation up to certain accuracy..not proved yet
@@ -144,6 +124,8 @@ function evec_similarity(x,y)
 
 end
 #it's very easy to transform evec_distance to evec_similarity
+
+#########################################################################################################################
 
 function knight_ruiz(M);
 #adapted from the MATLAB code implemented in Knight and Ruiz, 
@@ -233,68 +215,9 @@ function extend_mat(Z,iz,L);
     return Z_extend;
 end
 
-#for simplicity, we provide the distance dependence for an individual chromsome, not the genome-wide version
-function get_expect_vs_d_single_chr(W,chr2bins,bin_size);
+#########################################################################################################################
 
-	#unlike the previous version, we include all the pairs with 0 contact (but not dark) as data points..
-	#as there are 0 we can't take log, smoothing ae done in linear scale.
-
-	W=full(W);
-	W[isnan(W)]=0;
-	dark_bins=find(sum(W,1).==0);
-
-	N=size(W,1);
-	mmm=minimum(W[W.>0])/10;
-	
-	(u,v,w)=findnz(triu(W+mmm));
-	dark_u=[x in dark_bins for x in u];
-	dark_v=[x in dark_bins for x in v];
-
-	iz=find((1-dark_u).*(1-dark_v).>0);
-
-	u=u[iz];
-	v=v[iz];
-	w=w[iz]-mmm;
-
-	d=float(v-u);
-	d2=float(d);
-	d2[d2.==0]=1/3;#this is the average distance for 2 points drawn from an uniform distribution between [0.1];
-	d3=d2*bin_size;
-
-
-	#x=log10(d3);
-	#y=log10(w+mmm);
-
-	xs,ys_smooth=local_smnoothing(d2,w);
-	xs_aux=[round(i) for i in xs];
-	xs_aux[1]=1/3;
-
-	xs_all=collect(0:1.0:size(W,1)-1);xs_all[1]=1/3;
-	
-	ys_all=zeros(size(xs_all));
-	for k=1:length(xs_all);
-		ik=find(xs_aux.==xs_all[k]);
-		if ~isempty(ik)
-			ys_all[k]=ys_smooth[ik][1];
-		end
-	end	
-
-	A_x=find(ys_all.>0);
-	knots=(A_x,);
-	itp=interpolate(knots,ys_smooth, Gridded(Linear()));
-
-	A_nz=find(ys_all.==0);
-	for i=1:length(A_nz);
-		ys_all[A_nz[i]]=itp[A_nz[i]];
-	end
-
-	expect=ys_all;
-
-	return xs_all*bin_size, expect;
-
-end
-
-function local_smnoothing(x,y);
+function local_smoothing(x,y);
 	
 	span=0.01;
 	v=sortperm(x);
@@ -332,6 +255,7 @@ function local_smnoothing(x,y);
 
 end
 
+
 # this is an early version. it doesn't include all zeros...
 # but it seems that it's more conssitent with others do, like the compartment analysis in Stein2015
 # fitting is also a bit better..
@@ -355,7 +279,7 @@ function get_expect_vs_d_single_chr_v0(W,chr2bins,bin_size);
 	x=log10(d3);
 	y=log10(w);
 
-	xs,ys_smooth=local_smnoothing(x,y);
+	xs,ys_smooth=local_smoothing(x,y);
 
 	xs_all=collect(0:1.0:size(W,1)-1);xs_all[1]=1/3;
 	xs_all=xs_all*bin_size;
@@ -386,6 +310,9 @@ end
 
 function get_expect_vs_d_WG_v0(contact,chr2bins,bin_size);
 
+	#to find distance dependence, we should NOT iced the chr one by one.
+	#because in genome-wide scale dependance, we should keep the contacts in same base
+
 	all_d2=Float64[];
 	all_w=Float64[];
 	Ltmp=zeros(23);
@@ -415,7 +342,7 @@ function get_expect_vs_d_WG_v0(contact,chr2bins,bin_size);
 	x=log10(all_d3);
 	y=log10(all_w);
 
-	xs,ys_smooth=local_smnoothing(x,y);
+	xs,ys_smooth=local_smoothing(x,y);
 
 	xs_all=collect(0:1.0:maximum(Ltmp)-1);xs_all[1]=1/3;
 	xs_all=xs_all*bin_size;
@@ -444,83 +371,6 @@ function get_expect_vs_d_WG_v0(contact,chr2bins,bin_size);
 
 end
 
-
-
-
-function get_expect_vs_d_WG(contact,chr2bins,bin_size);
-
-	all_d2=Float64[];
-	all_w=Float64[];
-	Ltmp=zeros(23);
-	for chr_num=1:23
-	
-		#display(chr_num);
-		W=extract_chr(contact,chr2bins,chr_num);
-		W=full(W);
-		W[isnan(W)]=0;
-
-		dark_bins=find(sum(W,1).==0);
-
-		N=size(W,1);
-		mmm=minimum(W[W.>0])/10;
-	
-		(u,v,w)=findnz(triu(W+mmm));
-		dark_u=[x in dark_bins for x in u];
-		dark_v=[x in dark_bins for x in v];
-
-		iz=find((1-dark_u).*(1-dark_v).>0);
-
-		u=u[iz];
-		v=v[iz];
-		w=w[iz]-mmm;
-
-		d=float(v-u);
-		d2=float(d);
-		d2[d2.==0]=1/3;#this is the average distance for 2 points drawn from an uniform distribution between [0.1];
-		d3=d2*bin_size;
-
-		all_d2=[all_d2;d2];
-		all_w=[all_w;w];
-		Ltmp[chr_num]=size(W,1);
-	
-	end
-
-	all_d3=all_d2*bin_size;
-
-	xs,ys_smooth=local_smnoothing(all_d2,all_w);
-
-	xs_aux=[round(i) for i in xs];
-	xs_aux[1]=1/3;
-
-	xs_all=collect(0:1.0:size(W,1)-1);xs_all[1]=1/3;
-	
-	ys_all=zeros(size(xs_all));
-	for k=1:length(xs_all);
-		ik=find(xs_aux.==xs_all[k]);
-		if ~isempty(ik)
-			ys_all[k]=ys_smooth[ik][1];
-		end
-	end	
-
-	A_x=find(ys_all.>0);
-	knots=(A_x,);
-	itp=interpolate(knots,ys_smooth, Gridded(Linear()));
-
-	A_nz=find(ys_all.==0);
-	for i=1:length(A_nz);
-		ys_all[A_nz[i]]=itp[A_nz[i]];
-	end
-
-	expect=ys_all;
-
-	return xs_all*bin_size, expect;
-
-end
-
-#to find distance dependence, we should NOT iced the chr one by one.
-#because in genome-wide scale dependance, we should keep the contacts in same base
-#for individual genome dependence, may be ice again ot not both ok, but the difference is maginal, cor=0.99
-
 function get_f_W(W,ys);
 
 	N=size(W,1);
@@ -547,7 +397,6 @@ function get_f_W(W,ys);
 
 end
 
-
 function get_compartment_A_B(W,f_W);
 
 	iz=find(sum(W,2).>0);
@@ -567,29 +416,6 @@ function get_compartment_A_B(W,f_W);
 	return loc,span,ev_whole,cpt;
 
 end
-
-
-function generate_arbitrary_mapping_files(bin_size);
-
-	num_of_chromosomes=25;
-	chr2bins=zeros(2,num_of_chromosomes);
-	chr_length=define_chr_size();
-	chr_num_bins=round(Int64,floor(chr_length/bin_size))+1
-	#chr_num_bins=int(floor(chr_length/bin_size))+1;
-	chr2bins[2,:]=cumsum(chr_num_bins)'-1;
-	chr2bins[1,1]=0;
-	chr2bins[1,2:end]=chr2bins[2,1:end-1]+1;
-	X=round(Int,chr2bins+1);
-	bin2loc=zeros(3,X[2,end]);
-	for c=1:25
-		bin2loc[1,X[1,c]:X[2,c]]=c-1;
-		bin2loc[2,X[1,c]:X[2,c]]=round(Int,collect(1:bin_size:chr_length[c]))';
-		bin2loc[3,X[1,c]:X[2,c]]=[round(Int,collect(bin_size:bin_size:chr_length[c]))' chr_length[c]];
-	end
-	return round(Int64,chr2bins),round(Int64,bin2loc);
-	
-end
-
 
 #id is the starting loc of a chunk, and d is the length it spans..
 function get_chunks_v2(a,singleton=0);
@@ -620,146 +446,71 @@ function get_chunks_v2(a,singleton=0);
 	 return id,d;
 end
 
+#########################################################################################################################
 
+function generate_arbitrary_mapping_files(hg19_info,bin_size);
 
-function define_chr_size();
-	chr_length=zeros(Int,25,1);
-	chr_length[1]=249250621;
-	chr_length[2]=243199373;
-	chr_length[3]=198022430;
-	chr_length[4]=191154276;
-	chr_length[5]=180915260;
-	chr_length[6]=171115067;
-	chr_length[7]=159138663;
-	chr_length[8]=146364022;
-	chr_length[9]=141213431;
-	chr_length[10]=135534747;
-	chr_length[11]=135006516;
-	chr_length[12]=133851895;
-	chr_length[13]=115169878;
-	chr_length[14]=107349540;
-	chr_length[15]=102531392;
-	chr_length[16]=90354753;
-	chr_length[17]=81195210;
-	chr_length[18]=78077248;
-	chr_length[19]=59128983;
-	chr_length[20]=63025520;
-	chr_length[21]=48129895;
-	chr_length[22]=51304566;
-	chr_length[23]=155270560;#X
-	chr_length[24]=59373566;#Y
-	chr_length[25]=16571;
-	return chr_length;
-end
-
-function change_chr(chr)
-	if typeof(chr)==Float64||typeof(chr)==Int64;
-			if chr==25;
-				chr2="chrM";
-			elseif chr==24;
-				chr2="chrY";
-			elseif chr==23;
-				chr2="chrX";
-			elseif chr==22;
-				chr2="chr22";
-			elseif chr==21;
-				chr2="chr21";
-			elseif chr==20;
-				chr2="chr20";
-			elseif chr==19;
-				chr2="chr19";
-			elseif chr==18;
-				chr2="chr18";
-			elseif chr==17;
-				chr2="chr17";
-			elseif chr==16;
-				chr2="chr16";
-			elseif chr==15;
-				chr2="chr15";
-			elseif chr==14;
-				chr2="chr14";
-			elseif chr==13;
-				chr2="chr13";
-			elseif chr==12;
-				chr2="chr12";
-			elseif chr==11;
-				chr2="chr11";
-			elseif chr==10;
-				chr2="chr10";
-			elseif chr==9;
-				chr2="chr9";
-			elseif chr==8;
-				chr2="chr8";
-			elseif chr==7;
-				chr2="chr7";
-			elseif chr==6;
-				chr2="chr6";
-			elseif chr==5;
-				chr2="chr5";
-			elseif chr==4;
-				chr2="chr4";
-			elseif chr==3;
-				chr2="chr3";
-			elseif chr==2;
-				chr2="chr2";
-			elseif chr==1;
-				chr2="chr1";
-			end
-
-	elseif typeof(chr)==ASCIIString||typeof(chr)==SubString{ASCIIString}||typeof(chr)==UTF8String
-			if chr=="chrM";
-				chr2=25;
-			elseif chr=="chrY";
-				chr2=24;
-			elseif chr=="chrX";
-				chr2=23;
-			elseif chr=="chr22";
-				chr2=22;
-			elseif chr=="chr21";
-				chr2=21;
-			elseif chr=="chr20";
-				chr2=20;
-			elseif chr=="chr19";
-				chr2=19;
-			elseif chr=="chr18";
-				chr2=18;
-			elseif chr=="chr17";
-				chr2=17;
-			elseif chr=="chr16";
-				chr2=16;
-			elseif chr=="chr15";
-				chr2=15;
-			elseif chr=="chr14";
-				chr2=14;
-			elseif chr=="chr13";
-				chr2=13;
-			elseif chr=="chr12";
-				chr2=12;
-			elseif chr=="chr11";
-				chr2=11;
-			elseif chr=="chr10";
-				chr2=10;
-			elseif chr=="chr9";
-				chr2=9;
-			elseif chr=="chr8";
-				chr2=8;
-			elseif chr=="chr7";
-				chr2=7;
-			elseif chr=="chr6";
-				chr2=6;
-			elseif chr=="chr5";
-				chr2=5;
-			elseif chr=="chr4";
-				chr2=4;
-			elseif chr=="chr3";
-				chr2=3;
-			elseif chr=="chr2";
-				chr2=2;
-			elseif chr=="chr1";
-				chr2=1;
-			end
+	num_of_chromosomes=size(hg19_info,1);
+	chr2bins=zeros(2,num_of_chromosomes);
+	chr_length=hg19_info[:length];
+	chr_num_bins=round(Int64,floor(chr_length/bin_size))+1
+	#chr_num_bins=int(floor(chr_length/bin_size))+1;
+	chr2bins[2,:]=cumsum(chr_num_bins)'-1;
+	chr2bins[1,1]=0;
+	chr2bins[1,2:end]=chr2bins[2,1:end-1]+1;
+	X=round(Int,chr2bins+1);
+	bin2loc=zeros(3,X[2,end]);
+	for c=1:25
+		bin2loc[1,X[1,c]:X[2,c]]=c-1;
+		bin2loc[2,X[1,c]:X[2,c]]=round(Int,collect(1:bin_size:chr_length[c]))';
+		bin2loc[3,X[1,c]:X[2,c]]=[round(Int,collect(bin_size:bin_size:chr_length[c]))' chr_length[c]];
 	end
-	return chr2;
+	return round(Int64,chr2bins),round(Int64,bin2loc);
+	
 end
+
+function define_hg19_genome();
+
+	hg19_info=DataFrame();
+	hg19_info[:id]=1:25;
+	hg19_info[:chr]=["chr1","chr2","chr3","chr4","chr5","chr6","chr7","chr8","chr9","chr10",
+	"chr11","chr12","chr13","chr14","chr15","chr16","chr17","chr18","chr19","chr20","chr21",
+	"chr22","chrX","chrY","chrM"];
+	hg19_info[:length]=[249250621,243199373,198022430,191154276,180915260,171115067,159138663,
+	146364022,141213431,135534747,135006516,133851895,115169878,107349540,102531392,90354753,
+	81195210,78077248,59128983,63025520,48129895,51304566,155270560,59373566,16571];
+
+	return hg19_info;
+
+end
+
+function change_chr(hg19_info,chr)
+
+	if typeof(chr)==Float64||typeof(chr)==Int64;
+		chr2=hg19_info[:chr][hg19_info[:id].==chr][1];
+	elseif typeof(chr)==ASCIIString||typeof(chr)==SubString{ASCIIString}||typeof(chr)==UTF8String 
+		chr2=hg19_infp[:id][hg19_info[:chr].==chr][1];
+	end
+
+	return chr2;
+
+end
+
+
+#input file required is a 5 col. file with chr, pos, and contacts..	
+function read_simple_contact_map(input_file,hg19_info,chr_num,bin_size);
+	
+	chr_length=hg19_info[:length];
+	X=readtable(input_file,separator='\t',header=false);
+	chr2bins,bin2loc=generate_arbitrary_mapping_files(hg19_info,bin_size);
+	ib=find(bin2loc[1,:].==chr_num-1);
+	N=length(ib);
+	chr_string=change_chr(hg19_info,chr_num);
+	M=sparse(floor(Int64,X[iz,2]/bin_size)+1,floor(Int64,X[iz,4]/bin_size)+1,X[iz,5],N,N);
+	M=M+0;
+
+	return M;
+end
+
 
 
