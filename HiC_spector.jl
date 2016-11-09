@@ -371,6 +371,14 @@ function get_expect_vs_d_WG_v0(contact,chr2bins,bin_size);
 
 end
 
+
+function extract_chr(A,chr2bins,chr_num);
+	st=1+chr2bins[1,chr_num];
+	ed=1+chr2bins[2,chr_num];
+	A_chr=A[st:ed,st:ed];
+	return A_chr;
+end
+
 function get_f_W(W,ys);
 
 	N=size(W,1);
