@@ -5,12 +5,16 @@ A matrix library for spectral analysis and reproducilbilty of Hi-C contact maps.
 Julia users can include te file HiC_spector.jl for their own analysis.
 Several useful functions:
 
-get_reproducibility(M1,M2,num_evec);
+get_reproducibility
+  - to calculate the reproducibility metric between 2 HiC contact maps
 
+knight_ruiz
+  - Knight Ruiz algorithm for matrix balancing
 
+get_expect_vs_d_single_chr_v0
+  - to find the average contact frequency as a function of genomic distance
 
+get_compartment_A_B
+  - to find A B compartment, using method described in Liberman et al. Science 2009
 
-
-
-
-
+and a few functions for binning a genome, and reading HiC maps
