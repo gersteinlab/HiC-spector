@@ -1,4 +1,4 @@
-using HDF5; 
+using HDF5;
 using JLD;
 using MAT;
 using DataFrames;
@@ -6,7 +6,7 @@ using CurveFit;
 using Interpolations;
 
 function get_reproducibility(M1,M2,num_evec);
-	
+
 	k1=sum(M1,1);
 	k2=sum(M2,1);
 	iz=find(k1+k2.>0);
@@ -25,7 +25,7 @@ function get_reproducibility(M1,M2,num_evec);
 
 	#(a1,b1)=eigs(Ln1_nz1,which=:SM,nev=num_evec);
 	#(a2,b2)=eigs(Ln2_nz2,which=:SM,nev=num_evec);
-	
+
 	(a1,b1)=eig(full(Ln1_nz1));
 	(a2,b2)=eig(full(Ln2_nz2));
 
@@ -36,7 +36,7 @@ function get_reproducibility(M1,M2,num_evec);
 	ord1=sortperm(a1)[1:num_evec];
 	b1=b1[:,ord1];
 	ord2=sortperm(a2)[1:num_evec];
-	b2=b2[:,ord2];	
+	b2=b2[:,ord2];
 
 	b1_extend=zeros(size(M1b,1),num_evec);
 	for i=1:num_evec
@@ -45,7 +45,7 @@ function get_reproducibility(M1,M2,num_evec);
 		x1=[x[2:end]' x[end]]';
 		x2=[x[1] x[1:end-1]']';
 		xx=(x+x1+x2)/3;
-		b1_extend[i_z1,i]=xx[i_z1];		
+		b1_extend[i_z1,i]=xx[i_z1];
 	end
 
 	b2_extend=zeros(size(M2b,1),num_evec);
@@ -77,7 +77,7 @@ function get_Laplacian(M);
 	i_nz=find(K.>0);
 	D_nz=spdiagm(K[i_nz]);
 	D_isq=spdiagm(1./sqrt(K[i_nz]));
-	
+
 	#the smallest ev of L is 0.
 	#in many networks, because of the existenc of singleton, we expect more than 1 zero ev..
 	#if we do normalization, 0=lambda1<=lambda_1<=lambda_2.,,,<=2
@@ -107,7 +107,7 @@ function evec_distance(x,y);
 	d2=sum((x+y).^2);
 	if d1<d2
 		d=d1;
-	else 
+	else
 		d=d2;
 	end
 	return sqrt(d);
@@ -128,19 +128,19 @@ end
 #########################################################################################################################
 
 function knight_ruiz(M);
-#adapted from the MATLAB code implemented in Knight and Ruiz, 
+#adapted from the MATLAB code implemented in Knight and Ruiz,
 	M[isnan(M)]=0;
 	L=size(M,1);
 	iz=find(sum(M,2).>0);
 	A=M[iz,iz];
-	n=size(A,1); 
-	e = ones(n,1); 
+	n=size(A,1);
+	e = ones(n,1);
 	res=[];
 	delta = 0.1;
 	x0 = e;
 	tol = 1e-6;
 	g=0.9; etamax = 0.1; # Parameters used in inner stopping criterion.
-	
+
 	eta = etamax;
 	x = x0; rt = tol^2; v = x.*(A*x); rk = 1 - v;
 	rho_km1=sum(rk.^2);
@@ -218,7 +218,7 @@ end
 #########################################################################################################################
 
 function local_smoothing(x,y);
-	
+
 	span=0.01;
 	v=sortperm(x);
 	x=x[v];
@@ -250,7 +250,7 @@ function local_smoothing(x,y);
     	iz=find(x.==ux[i]);
     	uy_smooth[i]=mean(mm[iz]);
 	end
-   
+
 	return ux,uy_smooth;
 
 end
@@ -263,9 +263,9 @@ function get_expect_vs_d_single_chr_v0(W,chr2bins,bin_size);
 
 	W=full(W);
 	W[isnan(W)]=0;
-	
+
 	N=size(W,1);
-	
+
 
 	(u,v,w)=findnz(triu(W));
 	d=float(v-u);
@@ -291,7 +291,7 @@ function get_expect_vs_d_single_chr_v0(W,chr2bins,bin_size);
 		if ~isempty(ik)
 			ys_all[k]=ys_smooth[ik][1];
 		end
-	end	
+	end
 
 	A_x=find(ys_all.>0);
 	knots=(A_x,);
@@ -317,24 +317,24 @@ function get_expect_vs_d_WG_v0(contact,chr2bins,bin_size);
 	all_w=Float64[];
 	Ltmp=zeros(23);
 	for chr_num=1:23
-	
+
 		#display(chr_num);
 		W=extract_chr(contact,chr2bins,chr_num);
 		W=full(W);
 		W[isnan(W)]=0;
 
 		N=size(W,1);
-		
+
 		(u,v,w)=findnz(triu(W));
-		
+
 		d=float(v-u);
 		d2=float(d);
 		d2[d2.==0]=1/3;#this is the average distance for 2 points drawn from an uniform distribution between [0.1];
-		
+
 		all_d2=[all_d2;d2];
 		all_w=[all_w;w];
 		Ltmp[chr_num]=size(W,1);
-	
+
 	end
 
 	all_d3=all_d2*bin_size;
@@ -354,7 +354,7 @@ function get_expect_vs_d_WG_v0(contact,chr2bins,bin_size);
 		if ~isempty(ik)
 			ys_all[k]=ys_smooth[ik][1];
 		end
-	end	
+	end
 
 	A_x=find(ys_all.>0);
 	knots=(A_x,);
@@ -447,7 +447,7 @@ function get_chunks_v2(a,singleton=0);
 	 	id=sort(id);
 	 	#(id,tmp)        = sort(id);
 	 	d               = d[v];
-	 else 
+	 else
 	 	d               = find(c.==1) - id + 1;
 	 end
 
@@ -468,13 +468,13 @@ function generate_arbitrary_mapping_files(hg19_info,bin_size);
 	chr2bins[1,2:end]=chr2bins[2,1:end-1]+1;
 	X=round(Int,chr2bins+1);
 	bin2loc=zeros(3,X[2,end]);
-	for c=1:25
+	for c=1:size(hg19_info,1);
 		bin2loc[1,X[1,c]:X[2,c]]=c-1;
 		bin2loc[2,X[1,c]:X[2,c]]=round(Int,collect(1:bin_size:chr_length[c]))';
 		bin2loc[3,X[1,c]:X[2,c]]=[round(Int,collect(bin_size:bin_size:chr_length[c]))' chr_length[c]];
 	end
 	return round(Int64,chr2bins),round(Int64,bin2loc);
-	
+
 end
 
 function define_hg19_genome();
@@ -496,7 +496,7 @@ function change_chr(hg19_info,chr)
 
 	if typeof(chr)==Float64||typeof(chr)==Int64;
 		chr2=hg19_info[:chr][hg19_info[:id].==chr][1];
-	elseif typeof(chr)==ASCIIString||typeof(chr)==SubString{ASCIIString}||typeof(chr)==UTF8String 
+	elseif typeof(chr)==ASCIIString||typeof(chr)==SubString{ASCIIString}||typeof(chr)==UTF8String
 		chr2=hg19_infp[:id][hg19_info[:chr].==chr][1];
 	end
 
@@ -505,9 +505,9 @@ function change_chr(hg19_info,chr)
 end
 
 
-#input file required is a 5 col. file with chr, pos, and contacts..	
+#input file required is a 5 col. file with chr, pos, and contacts..
 function read_simple_contact_map(input_file,hg19_info,chr_num,bin_size);
-	
+
 	chr_length=hg19_info[:length];
 	X=readtable(input_file,separator='\t',header=false);
 	chr2bins,bin2loc=generate_arbitrary_mapping_files(hg19_info,bin_size);
@@ -520,5 +520,12 @@ function read_simple_contact_map(input_file,hg19_info,chr_num,bin_size);
 	return M;
 end
 
+function define_ce10_genome();
 
+	ce10_info=DataFrame();
+	ce10_info[:id]=1:7;
+	ce10_info[:chr]=["chrV","chrX","chrIV","chrII","chrI","chrIII","chrM"];
+	ce10_info[:length]=[20924149,17718866,17493793,15279345,15072423,13783700,13794];
+	return ce10_info;
 
+end
