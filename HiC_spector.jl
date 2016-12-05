@@ -386,7 +386,7 @@ function get_f_W(W,ys);
 	dark_bins=find(sum(W,1).==0);
 	num_dark=length(dark_bins);
 	N_eff=N-num_dark;
-	f_W=zeros(size(W));#what's f_W? it's a generation of ones(size(W));
+	f_W=zeros(size(W));
 
 	x=collect(1:N);
 
