@@ -529,3 +529,24 @@ function define_ce10_genome();
 	return ce10_info;
 
 end
+
+function define_dm3_genome();
+
+	dm3_info=DataFrame();
+	dm3_info[:id]=1:15;
+	dm3_info[:chr]=["2L","2LHet","2R","2RHet","3L","3LHet","3R","3RHet","4","U","Uextra","X","Xhet","YHet","dmel_mitochondrion_genome"];
+	dm3_info[:length]=[23011544,368872,21146708,3288761,24543557,2555491,27905053,2517507,1351857,10049037,29004656,22422827,204112,347038,19517];
+
+	return dm3_info;
+
+end
+
+
+
+
+
+
+
+
+
+
