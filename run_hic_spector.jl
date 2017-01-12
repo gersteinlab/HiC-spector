@@ -1,12 +1,15 @@
 include("/home/fas/gerstein/ky26/Github/HiC_spectra/HiC_spector.jl");
+using PyPlot;
+
+#####Calculating reproducibility scores using A549 data
 
 hg19_info=define_hg19_genome();
 bin_size=40000;
 
 chr2bins,bin2loc=generate_arbitrary_mapping_files(hg19_info,bin_size);
 
-map_file1="./data/A549C-HindIII-R1_int.bed";
-map_file2="./data/A549D-HindIII-R2_int.bed";
+map_file1="./data/A549/A549C-HindIII-R1_int.bed";
+map_file2="./data/A549/A549D-HindIII-R2_int.bed";
 
 num_evec=30;
 r=20;
@@ -38,11 +41,14 @@ for chr_num=1:23;
 end
 
 
-using PyPlot;
+#####Other analysis using MCF7 data
 
-chr2bins,bin2loc=generate_arbitrary_mapping_files(250000);
-data_loc="/home/fas/gerstein/ky26/scratch/Hi-C_data/Stein_GB2015/Hi-C_MCF7_MCF10A_processed_HiCfiles/Heatmaps/chrxchr/250kb_resolution/";
+hg19_info=define_hg19_genome();
 bin_size=250000;
+chr2bins,bin2loc=generate_arbitrary_mapping_files(hg19_info,bin_size);
+
+data_loc="./data/HiCStein-MCF7-WT.maps/";
+
 all_gamma=zeros(23);
 all_K=zeros(23);
 all_w=[];

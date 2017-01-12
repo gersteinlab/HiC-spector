@@ -1,1 +1,11 @@
-Because of their sizes, please download the data from the following links to the data folder.
+Because of their sizes, please download the data from the following links to the data folder, and unzip the files.
+
+/nfs/web/kkyan/public_html/sharebox/A549.tar.gz
+
+/nfs/web/kkyan/public_html/sharebox/HiCStein-MCF7-WT.maps.tar.gz
+
+The A549 Hi-C experiments were performed by the ENCODE consortium. The raw reads can be download from the ENCODE portal (https://www.encodeproject.org/) with libraries ENCLB571HTP ENCLB222WYT. The reads were mapped to generate contact maps using the tool HiC-Pro, with bin size 40kb. Please note that the files here contains only intra-chromosomal interactions. The contact maps were not normalized.
+
+The MCF7 data were obtained from Barutcu et al. Genome Biology 2015 (GSE66733). The contact maps have bin size 250kb, and have already been normalized.
+
+
