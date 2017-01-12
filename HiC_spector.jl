@@ -127,8 +127,8 @@ end
 
 #########################################################################################################################
 
+#This code was adapted from the MATLAB code implemented in Knight and Ruiz, IMA Journal of Numerical Analysis (2012)
 function knight_ruiz(M);
-#adapted from the MATLAB code implemented in Knight and Ruiz,
 	M[isnan(M)]=0;
 	L=size(M,1);
 	iz=find(sum(M,2).>0);
@@ -199,8 +199,10 @@ function knight_ruiz(M);
 	A2=diagm(x)*A2;
 	A_balance=extend_mat(A2,iz,L);
 	A_balance=(A_balance+A_balance')/2;
+	x_final=zeros(L);
+	x_final[iz]=x;
 
-	return x,A_balance;
+	return x_final,A_balance;
 
 end
 

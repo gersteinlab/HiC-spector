@@ -67,6 +67,10 @@ xs_all, expect=get_expect_vs_d_single_chr_v0(W,chr2bins,bin_size);
 
 PyPlot.plot(log10(xs_all),log10(expect));
 
+##Matrix Balancing: turn W to W_balance #####
+#the row sums and columns sum of W_balance are all 1, except the empty rows/columns
+x,W_balance=knight_ruiz(W);
+
 ##Find A/B compartments
 
 f_W=get_f_W(W,expect);
@@ -74,5 +78,7 @@ loc,span,ev_whole,cpt=get_compartment_A_B(W,f_W);
 
 #ev_whole records the leading eigenvector of the covariance matrix, ev1 reported the compartment. 
 ev1=ev_whole[:,1];
+
+
 
 
