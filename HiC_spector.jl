@@ -421,6 +421,8 @@ function get_compartment_A_B(W,f_W);
 	ev_whole[izz,:]=NaN;
 
 	(loc,span)=get_chunks_v2(sign(ev_whole[:,1]),1);#
+	loc=round(loc);
+	span=round(span);
 	cpt=sign(ev_whole[loc,1]);
 
 	return loc,span,ev_whole,cpt;
@@ -454,6 +456,29 @@ function get_chunks_v2(a,singleton=0);
 	 end
 
 	 return id,d;
+end
+
+
+
+function report_compartments(hg19_info,bin2loc,loc,span,ev1,chr_num);
+	
+	iz=find(bin2loc[1,:].==chr_num-1);
+	a=round(bin2loc[2:3,iz]');
+	st=a[loc];
+	ed=a[loc+span]-1;
+	output=DataFrame();
+	chr=cell(size(st));
+	for i=1:length(chr);
+		chr[i]=change_chr(hg19_info,chr_num);
+	end
+	output[:chr]=chr;
+	output[:start]=st;
+	output[:end]=ed;
+	x=ev1[loc];
+	x[isnan(x)]=0;
+	output[:compartment]=sign(x);
+
+	return output;
 end
 
 #########################################################################################################################

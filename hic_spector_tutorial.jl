@@ -76,8 +76,16 @@ x,W_balance=knight_ruiz(W);
 f_W=get_f_W(W,expect);
 loc,span,ev_whole,cpt=get_compartment_A_B(W,f_W);
 
-#ev_whole records the leading eigenvector of the covariance matrix, ev1 reported the compartment. 
 ev1=ev_whole[:,1];
+#ev_whole records the leading eigenvector of the covariance matrix, ev1 reported the compartment. 
+#bins with +ve and -ve values in ev1 correspond to different compartments. As by convention compartment A refers to the expressed
+#part whereas compartment B refers to the lowly expressed part, extra information is required to determine which sign corresponds to which compartment.
+
+#to obtain the genomic coordinates, use
+
+output=report_compartment(hg19_info,bin2loc,loc,span,ev1,chr_num);
+
+
 
 
 
