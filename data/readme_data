@@ -8,5 +8,3 @@ The A549 Hi-C experiments were performed by the ENCODE consortium. The raw reads
 
 The MCF7 data were obtained from Barutcu et al. Genome Biology 2015 (GSE66733). The contact maps have bin size 250kb, and have already been normalized by the ICE algorithm.
 
-
-

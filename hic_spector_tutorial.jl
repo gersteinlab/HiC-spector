@@ -19,7 +19,7 @@ r=20;
 X1=readtable(map_file1,separator='\t',header=false);
 X2=readtable(map_file2,separator='\t',header=false);
 
-#Q for 23 chromosomes, 1 to 22, and X
+#the reproducibility score Q for 23 chromosomes, 1 to 22, and X
 Q=zeros(23);
 
 for chr_num=1:23;
@@ -80,6 +80,7 @@ ev1=ev_whole[:,1];
 #ev_whole records the leading eigenvector of the covariance matrix, ev1 reported the compartment. 
 #bins with +ve and -ve values in ev1 correspond to different compartments. As by convention compartment A refers to the expressed
 #part whereas compartment B refers to the lowly expressed part, extra information is required to determine which sign corresponds to which compartment.
+#the value of ev1 is zero if the bin have no read mapped.
 
 #to obtain the genomic coordinates, use
 
