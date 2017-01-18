@@ -1,4 +1,4 @@
-include("/home/fas/gerstein/ky26/Github/HiC_spectra/HiC_spector.jl");
+include("./HiC_spector.jl");
 using PyPlot;
 
 #####Calculating reproducibility scores using A549 data
@@ -85,9 +85,6 @@ ev1=ev_whole[:,1];
 #to obtain the genomic coordinates, use
 
 output=report_compartment(hg19_info,bin2loc,loc,span,ev1,chr_num);
-
-
-
 
 
 
