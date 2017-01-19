@@ -1,52 +1,62 @@
 include("./HiC_spector.jl");
-using PyPlot;
+
 
 #####Calculating reproducibility scores using A549 data
 
-map_file1="./data/A549/A549C-HindIII-R1_int.bed";
-map_file2="./data/A549/A549D-HindIII-R2_int.bed";
-
 #The contact maps are obtained by binning the human genome in 40kb. 
-
 
 hg19_info=define_hg19_genome();
 bin_size=40000;
 chr2bins,bin2loc=generate_arbitrary_mapping_files(hg19_info,bin_size);
 
 #The number of eigenvectors (suggested value=20)
-r=20;
 
-X1=readtable(map_file1,separator='\t',header=false);
-X2=readtable(map_file2,separator='\t',header=false);
+r=20;
 
 #the reproducibility score Q for 23 chromosomes, 1 to 22, and X
 Q=zeros(23);
 
+###these arrays are used for benchmark only
+elasped_time=zeros(23);
+mem=zeros(23);
+
 for chr_num=1:23;
+
 	display(chr_num);
+
+	chr_string=change_chr(hg19_info,chr_num);
+
+	map_file1="./data/A549/A549C-HindIII-R1_"*chr_string*".inter";
+	map_file2="./data/A549/A549D-HindIII-R2_"*chr_string*".inter";
+
+	X1=readdlm(map_file1,Int64);
+	X2=readdlm(map_file2,Int64);
 
 	ib=find(bin2loc[1,:].==chr_num-1);
 	N=length(ib);
 
-	chr_string=change_chr(hg19_info,chr_num);
-		
-	iz1=find(X1[:,1].==chr_string);
-	M1=sparse(floor(Int64,X1[iz1,2]/bin_size)+1,floor(Int64,X1[iz1,4]/bin_size)+1,X1[iz1,5],N,N);
-	iz2=find(X2[:,1].==chr_string);
-	M2=sparse(floor(Int64,X2[iz2,2]/bin_size)+1,floor(Int64,X2[iz2,4]/bin_size)+1,X2[iz2,5],N,N);
+	M1=sparse(floor(Int64,X1[:,1]/bin_size)+1,floor(Int64,X1[:,2]/bin_size)+1,X1[:,3],N,N);
+	M2=sparse(floor(Int64,X2[:,1]/bin_size)+1,floor(Int64,X2[:,2]/bin_size)+1,X2[:,3],N,N);
 
 	M1=full(M1);
 	M2=full(M2);
 	
 	evs,a1,a2=get_reproducibility(M1,M2,r);
+	Q[chr_num]=mean(evs);
 
-	Q[chr_num]=mean(evs[1:r]);
+	#######the next few lines can be used for benchmark##############
+	#info=@timed get_reproducibility(M1,M2,r);
+	#evs=info[1][1];
+	#Q[chr_num]=mean(evs);
+	#elasped_time[chr_num]=info[2];
+	#mem[chr_num]=info[3];
+
 end
 
 
 #####Other analysis using MCF7 data
 
-data_loc="./data/HiCStein-MCF7-WT.maps/";
+data_loc="./data/MCF7-WT/";
 
 #The contact maps are obtained by binning the human genome in 250kb. 
 
@@ -65,6 +75,7 @@ W[isnan(W)]=0;
 
 xs_all, expect=get_expect_vs_d_single_chr_v0(W,chr2bins,bin_size);
 
+using PyPlot;
 PyPlot.plot(log10(xs_all),log10(expect));
 
 ##Matrix Balancing: turn W to W_balance #####
