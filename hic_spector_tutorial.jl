@@ -42,7 +42,7 @@ for chr_num=1:23;
 	M2=full(M2);
 	
 	evs,a1,a2=get_reproducibility(M1,M2,r);
-	Q[chr_num]=mean(evs);
+	Q[chr_num]=evs;
 
 	#######the next few lines can be used for benchmark##############
 	#info=@timed get_reproducibility(M1,M2,r);

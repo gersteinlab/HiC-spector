@@ -23,15 +23,8 @@ function get_reproducibility(M1,M2,num_evec);
 	Ln1_nz1=get_Laplacian(M1b);
 	Ln2_nz2=get_Laplacian(M2b);
 
-	#(a1,b1)=eigs(Ln1_nz1,which=:SM,nev=num_evec);
-	#(a2,b2)=eigs(Ln2_nz2,which=:SM,nev=num_evec);
-
 	(a1,b1)=eig(full(Ln1_nz1));
 	(a2,b2)=eig(full(Ln2_nz2));
-
-	#ev from eigs diff from eig in the 4th decimal place
-	#but more importantly, we found ev that are close to 0 in the 2th, 3rd place using
-	#eigs. they are not the right one...
 
 	ord1=sortperm(a1)[1:num_evec];
 	b1=b1[:,ord1];
@@ -63,13 +56,13 @@ function get_reproducibility(M1,M2,num_evec);
 		evd[i]=evec_distance(b1_extend[:,i],b2_extend[:,i]);
 	end
 
-	evs=abs(sqrt(2)-evd)/sqrt(2);
+	Sd=sum(evd);
+
+	evs=abs(sqrt(2)-Sd/num_evec)/sqrt(2);
 
 	return evs,a1,a2;
 
 end
-
-
 
 function get_Laplacian(M);
 
@@ -77,15 +70,6 @@ function get_Laplacian(M);
 	i_nz=find(K.>0);
 	D_nz=spdiagm(K[i_nz]);
 	D_isq=spdiagm(1./sqrt(K[i_nz]));
-
-	#the smallest ev of L is 0.
-	#in many networks, because of the existenc of singleton, we expect more than 1 zero ev..
-	#if we do normalization, 0=lambda1<=lambda_1<=lambda_2.,,,<=2
-
-	#to avoid matrix multiplication with 0, inf. actually
-	#L_norm(i,j)=1 if i=j
-	#L_norm(i,j)=-1/sqrt(deg(i)*deg(j)))
-	#0 otherwise.
 
 	Ln_nz=M[i_nz,i_nz]*D_isq;
 	Ln_nz=I-D_isq*Ln_nz;
@@ -102,7 +86,7 @@ function get_ipr(evec);
 end
 
 function evec_distance(x,y);
-	#as x and y are normalized in the first place, sqrt(d) makes sense, no need to scale with n
+	
 	d1=sum((x-y).^2);
 	d2=sum((x+y).^2);
 	if d1<d2
@@ -110,20 +94,9 @@ function evec_distance(x,y);
 	else
 		d=d2;
 	end
+
 	return sqrt(d);
 end
-
-function evec_similarity(x,y)
-
-	d=evec_distance(x,y);
-	max_d=sqrt(2);
-	#this is verified by simulation up to certain accuracy..not proved yet
-	s=abs(max_d-d)/max_d;
-
-	return s;
-
-end
-#it's very easy to transform evec_distance to evec_similarity
 
 #########################################################################################################################
 
@@ -257,10 +230,6 @@ function local_smoothing(x,y);
 
 end
 
-
-# this is an early version. it doesn't include all zeros...
-# but it seems that it's more conssitent with others do, like the compartment analysis in Stein2015
-# fitting is also a bit better..
 function get_expect_vs_d_single_chr_v0(W,chr2bins,bin_size);
 
 	W=full(W);
@@ -274,9 +243,6 @@ function get_expect_vs_d_single_chr_v0(W,chr2bins,bin_size);
 	d2=float(d);
 	d2[d2.==0]=1/3;#this is the average distance for 2 points drawn from an uniform distribution between [0.1];
 	d3=d2*bin_size;
-
-	#model = loess(log10(d3),log10(w),span=0.01);
-	#the loess fct is rather slow, and fail to work at some matrices (not sure why), we have replaced it by a simpler method
 
 	x=log10(d3);
 	y=log10(w);
@@ -312,9 +278,6 @@ end
 
 function get_expect_vs_d_WG_v0(contact,chr2bins,bin_size);
 
-	#to find distance dependence, we should NOT iced the chr one by one.
-	#because in genome-wide scale dependance, we should keep the contacts in same base
-
 	all_d2=Float64[];
 	all_w=Float64[];
 	Ltmp=zeros(23);
@@ -331,7 +294,7 @@ function get_expect_vs_d_WG_v0(contact,chr2bins,bin_size);
 
 		d=float(v-u);
 		d2=float(d);
-		d2[d2.==0]=1/3;#this is the average distance for 2 points drawn from an uniform distribution between [0.1];
+		d2[d2.==0]=1/3;
 
 		all_d2=[all_d2;d2];
 		all_w=[all_w;w];
@@ -457,8 +420,6 @@ function get_chunks_v2(a,singleton=0);
 
 	 return id,d;
 end
-
-
 
 function report_compartments(hg19_info,bin2loc,loc,span,ev1,chr_num);
 	
