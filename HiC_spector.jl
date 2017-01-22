@@ -7,9 +7,22 @@ using Interpolations;
 
 function get_reproducibility(M1,M2,num_evec);
 
-	k1=sum(M1,1);
-	k2=sum(M2,1);
-	iz=find(k1+k2.>0);
+	if ~isequal(M1,M1')
+		tmp1=M1-diagm(diag(M1));
+		M1=tmp1+tmp1'+diagm(diag(M1));
+	end
+	if ~isequal(M2,M2')
+		tmp2=M2-diagm(diag(M2));
+		M2=tmp2+tmp2'+diagm(diag(M2));
+	end
+
+	k1=sum(M1,2);
+	d1=diag(M1);
+	kd1=!((k1.==1).*(d1.>0))
+	k2=sum(M2,2);
+	d2=diag(M2);
+	kd2=!((k2.==1).*(d2.>0))
+	iz=find((k1+k2.>0).*(kd1.>0).*(kd2.>0));
 
 	M1b=M1[iz,iz];
 	M2b=M2[iz,iz];
