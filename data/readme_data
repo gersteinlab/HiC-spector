@@ -4,7 +4,10 @@ http://homes.gersteinlab.org/people/kkyan/sharebox/A549.tar.gz
 
 http://homes.gersteinlab.org/people/kkyan/sharebox/MCF7-WT.tar.gz
 
+http://homes.gersteinlab.org/people/kkyan/sharebox/examples_hicpro.tar.gz
+
 The A549 Hi-C experiments were performed by the ENCODE consortium. The raw reads can be download from the ENCODE portal (https://www.encodeproject.org/) with libraries ENCLB571HTP ENCLB222WYT. The reads were mapped to generate contact maps using the tool HiC-Pro, with bin size 40kb. Please note that the files here contains only intra-chromosomal interactions. The contact maps were not normalized.
 
 The MCF7 data were obtained from Barutcu et al. Genome Biology 2015 (GSE66733). The contact maps have bin size 250kb, and have already been normalized by the ICE algorithm.
 
+The hicpro files were generated using Hi-C data of hESC and IMR90 from Dixon etal. Nature 2012, wth bin size 500kb. They include both intra- and inter- chromosomal interactions.
