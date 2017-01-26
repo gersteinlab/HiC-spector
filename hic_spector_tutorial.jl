@@ -37,8 +37,10 @@ for chr_num=1:23;
 	M1=sparse(X1[:,1],X1[:,2],X1[:,3],N,N);
 	M2=sparse(X2[:,1],X2[:,2],X2[:,3],N,N);
 
-	M1=M1+M1';
-	M2=M2+M2';
+	M1_tmp=M1-diagm(diag(M1));
+	M2_tmp=M2-diagm(diag(M2));
+	M1=M1+M1_tmp';
+	M2=M2+M2_tmp';
 
 	#Note that each interaction has shown once in these files. M1, M2 are therefore asymmetric.
 	#we therefore do M=M+M'.

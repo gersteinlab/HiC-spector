@@ -11,3 +11,10 @@ The A549 Hi-C experiments were performed by the ENCODE consortium. The raw reads
 The MCF7 data were obtained from Barutcu et al. Genome Biology 2015 (GSE66733). The contact maps have bin size 250kb, and have already been normalized by the ICE algorithm.
 
 The hicpro files were generated using Hi-C data of hESC and IMR90 from Dixon etal. Nature 2012, wth bin size 500kb. They include both intra- and inter- chromosomal interactions.
+
+Sample .hic files can be obtained from the Aiden lab.
+For code demonstration, please download the files HIC073.hic and HIC074.hic from 
+https://bcm.app.box.com/v/aidenlab/1/11406189541
+in the folder Rao & Huntley et al. | Cell 2014 /K562
+
+
