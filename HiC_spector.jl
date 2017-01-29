@@ -54,6 +54,15 @@ function get_reproducibility(M1,M2,num_evec);
 		b1_extend[i_z1,i]=xx[i_z1];
 	end
 
+	ipr1=zeros(num_evec);
+	for i=1:num_evec;
+		ipr1[i]=get_ipr(b1_extend[:,i]);
+	end
+
+	ipr_cut=5;
+
+	b1_extend_eff=b1_extend[:,ipr1.>ipr_cut];
+
 	b2_extend=zeros(size(M2b,1),num_evec);
 	for i=1:num_evec
 		b2_extend[i_nz2,i]=b2[:,i];
@@ -64,14 +73,23 @@ function get_reproducibility(M1,M2,num_evec);
 		b2_extend[i_z2,i]=xx[i_z2];
 	end
 
-	evd=zeros(num_evec);
+	ipr2=zeros(num_evec);
 	for i=1:num_evec;
-		evd[i]=evec_distance(b1_extend[:,i],b2_extend[:,i]);
+		ipr2[i]=get_ipr(b2_extend[:,i]);
+	end
+
+	b2_extend_eff=b2_extend[:,ipr2.>ipr_cut];
+
+	num_evec_eff=minimum([size(b1_extend_eff,2);size(b2_extend_eff,2)]);
+
+	evd=zeros(num_evec_eff);
+	for i=1:num_evec_eff;
+		evd[i]=evec_distance(b1_extend_eff[:,i],b2_extend_eff[:,i]);
 	end
 
 	Sd=sum(evd);
 
-	evs=abs(sqrt(2)-Sd/num_evec)/sqrt(2);
+	evs=abs(sqrt(2)-Sd/num_evec_eff)/sqrt(2);
 
 	return evs,a1,a2;
 
@@ -93,8 +111,8 @@ function get_Laplacian(M);
 end
 
 function get_ipr(evec);
-
-	ipr=1./sum(evec.^4,1);
+	#evec should be a unit vector
+	ipr=1./sum(evec.^4,1)[1];
 
 end
 
