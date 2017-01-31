@@ -44,14 +44,11 @@ function get_reproducibility(M1,M2,num_evec);
 	ord2=sortperm(a2)[1:num_evec];
 	b2=b2[:,ord2];
 
+	ipr_cut=5;
+
 	b1_extend=zeros(size(M1b,1),num_evec);
 	for i=1:num_evec
 		b1_extend[i_nz1,i]=b1[:,i];
-		x=b1_extend[:,i];
-		x1=[x[2:end]' x[end]]';
-		x2=[x[1] x[1:end-1]']';
-		xx=(x+x1+x2)/3;
-		b1_extend[i_z1,i]=xx[i_z1];
 	end
 
 	ipr1=zeros(num_evec);
@@ -59,18 +56,11 @@ function get_reproducibility(M1,M2,num_evec);
 		ipr1[i]=get_ipr(b1_extend[:,i]);
 	end
 
-	ipr_cut=5;
-
 	b1_extend_eff=b1_extend[:,ipr1.>ipr_cut];
 
 	b2_extend=zeros(size(M2b,1),num_evec);
 	for i=1:num_evec
 		b2_extend[i_nz2,i]=b2[:,i];
-		x=b2_extend[:,i];
-		x1=[x[2:end]' x[end]]';
-		x2=[x[1] x[1:end-1]']';
-		xx=(x+x1+x2)/3;
-		b2_extend[i_z2,i]=xx[i_z2];
 	end
 
 	ipr2=zeros(num_evec);
