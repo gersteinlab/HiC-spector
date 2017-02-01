@@ -8,18 +8,18 @@ using Interpolations;
 function get_reproducibility(M1,M2,num_evec);
 
 	if ~isequal(M1,M1')
-		tmp1=M1-diagm(diag(M1));
+		tmp1=M1-spdiagm(diag(M1));
 		M1=tmp1+tmp1'+diagm(diag(M1));
 	end
 	if ~isequal(M2,M2')
-		tmp2=M2-diagm(diag(M2));
+		tmp2=M2-spdiagm(diag(M2));
 		M2=tmp2+tmp2'+diagm(diag(M2));
 	end
 
-	k1=sum(sign(M1),2);
+	k1=sum(spones(M1),2);
 	d1=diag(M1);
 	kd1=!((k1.==1).*(d1.>0))
-	k2=sum(sign(M2),2);
+	k2=sum(spones(M2),2);
 	d2=diag(M2);
 	kd2=!((k2.==1).*(d2.>0))
 	iz=find((k1+k2.>0).*(kd1.>0).*(kd2.>0));
@@ -36,13 +36,10 @@ function get_reproducibility(M1,M2,num_evec);
 	Ln1_nz1=get_Laplacian(M1b);
 	Ln2_nz2=get_Laplacian(M2b);
 
-	(a1,b1)=eig(full(Ln1_nz1));
-	(a2,b2)=eig(full(Ln2_nz2));
-
-	ord1=sortperm(a1)[1:num_evec];
-	b1=b1[:,ord1];
-	ord2=sortperm(a2)[1:num_evec];
-	b2=b2[:,ord2];
+	(a1,b1)=eigs(speye(length(i_nz1))-Ln1_nz1,nev=num_evec,which=:LM);
+	a1=1-a1;
+	(a2,b2)=eigs(speye(length(i_nz2))-Ln2_nz2,nev=num_evec,which=:LM);
+	a2=1-a2;
 
 	ipr_cut=5;
 
@@ -93,7 +90,7 @@ function get_Laplacian(M);
 	D_isq=spdiagm(1./sqrt(K[i_nz]));
 
 	Ln_nz=M[i_nz,i_nz]*D_isq;
-	Ln_nz=I-D_isq*Ln_nz;
+	Ln_nz=speye(length(i_nz))-D_isq*Ln_nz;
 	n=size(M,1);
 
 	Ln_nz=(Ln_nz+Ln_nz')/2;

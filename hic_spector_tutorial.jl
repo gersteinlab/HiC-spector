@@ -19,7 +19,7 @@ Q=zeros(23);
 elasped_time=zeros(23);
 mem=zeros(23);
 
-for chr_num=1:23;
+for chr_num=2:23;
 
 	display(chr_num);
 
@@ -37,27 +37,24 @@ for chr_num=1:23;
 	M1=sparse(X1[:,1],X1[:,2],X1[:,3],N,N);
 	M2=sparse(X2[:,1],X2[:,2],X2[:,3],N,N);
 
-	M1_tmp=M1-diagm(diag(M1));
-	M2_tmp=M2-diagm(diag(M2));
+	M1_tmp=M1-spdiagm(diag(M1));
+	M2_tmp=M2-spdiagm(diag(M2));
 	M1=M1+M1_tmp';
 	M2=M2+M2_tmp';
 
 	#Note that each interaction has shown once in these files. M1, M2 are therefore asymmetric.
 	#we therefore do M=M+M'.
 	#neveetheless, it's not necessary because the code get_reproducibility(M1,M2,num_evec) does it for you
-
-	M1=full(M1);
-	M2=full(M2);
 	
-	evs,a1,a2=get_reproducibility(M1,M2,r);
-	Q[chr_num]=evs;
+	#evs,a1,a2=get_reproducibility(M1,M2,r);
+	#Q[chr_num]=evs;
 
 	#######the next few lines can be used for benchmark##############
-	#info=@timed get_reproducibility(M1,M2,r);
-	#evs=info[1][1];
-	#Q[chr_num]=mean(evs);
-	#elasped_time[chr_num]=info[2];
-	#mem[chr_num]=info[3];
+	info=@timed get_reproducibility(M1,M2,r);
+	evs=info[1][1];
+	Q[chr_num]=mean(evs);
+	elasped_time[chr_num]=info[2];
+	mem[chr_num]=info[3];
 
 end
 
