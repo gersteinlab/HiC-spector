@@ -26,6 +26,8 @@ Please refer to ./data/readme_data for the format of the input files
 
 For non-julia users, one can use the script run_reproducibility.py to obtain the reproducibility score. Usage:
 
+<h3>Aurthor/Support</h3>
+Koon-Kiu Yan, koon-kiu.yan@yale.edu; Chengfei Yan, chengfel.yan@yale.edu
 
 <h3>Reference</h3>
 Yan KK, Galip Gürkan Yardımcı, William S Noble and Gerstein M. HiC-Spector: a matrix library for spectral and reproducibility analysis of Hi-C contact maps. bioRxiv https://doi.org/10.1101/088922
