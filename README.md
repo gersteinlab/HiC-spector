@@ -20,6 +20,7 @@ include("./HiC_spector.jl");
 Please refer to the file hic_spector_tutorial.jl for examples on using some of the functions. 
 The script run_reproducibility.jl is used to get the reproducibility score from a command-line interface. Usage:
 > julia run_reproducibility.jl matrix_file1 matrix_file2 
+
 Please refer to ./data/readme_data for the format of the input files
 For non-julia users, one can use the script run_reproducibility.py to obtain the reproducibility score. Usage:
 
