@@ -29,7 +29,11 @@ The script run_reproducibility.jl is used to get the reproducibility score from 
 
 Please refer to ./data/readme_data for the format of the input files
 
-For non-julia users, one can use the script run_reproducibility.py to obtain the reproducibility score. Usage:
+For non-julia users, one can use the python script run_reproducibility.py to obtain the reproducibility score. Usage:
+> python run_reproducibility.py matrix_file1 matrix_file2
+
+In addition to the text delimited input file, the python script can calculate reproducibility score by reading files in .hic format. Usage:
+>
 
 <h3>Aurthor/Support</h3>
 Koon-Kiu Yan, koon-kiu.yan@yale.edu; Chengfei Yan, chengfei.yan@yale.edu
