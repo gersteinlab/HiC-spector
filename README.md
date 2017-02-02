@@ -19,6 +19,8 @@ and a few functions for binning a genome, and reading HiC maps
 <h3>Installation</h3> 
 HiC-spector is mostly written in Julia. It has been tested in Julia 0.4 and 0.5. Both the Julia language and several packages have to be installed. Please refer to the beginning of the file HiC_spector.jl for the necessary packages. To get some contact maps for testing the code, please follow the instructions shown in the file data/readme_data.
 
+There is a python script available for quantifying reproducibility. The python version is able to read files in .hic format. To do so, please download the python version of the tool straw (straw.py) developed by the Aiden lab (https://github.com/theaidenlab/straw).
+
 <h3>Usage</h3>
 Julia users can include the file HiC_spector.jl for their own analysis by simply using
 > include("./HiC_spector.jl");
@@ -32,7 +34,7 @@ Please refer to ./data/readme_data for the format of the input files
 For non-julia users, one can use the python script run_reproducibility.py to obtain the reproducibility score. Usage:
 > python run_reproducibility.py matrix_file1 matrix_file2
 
-In addition to the text delimited input file, the python script can calculate reproducibility score by reading files in .hic format. Usage:
+In addition to the text delimited input files, the python script can calculate reproducibility score by reading files in .hic format. Usage:
 >
 
 <h3>Aurthor/Support</h3>
