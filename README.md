@@ -1,14 +1,19 @@
 # HiC-spector
 
 A matrix library for spectral and reproducilbilty analysis of Hi-C contact maps. Several useful functions:
+
 get_reproducibility
   - to calculate the reproducibility metric between 2 HiC contact maps
+  
 knight_ruiz
   - Knight Ruiz algorithm for matrix balancing
+  
 get_expect_vs_d_single_chr_v0
   - to find the average contact frequency as a function of genomic distance
+  
 get_compartment_A_B
   - to find A B compartment, using method described in Liberman et al. Science 2009
+  
 and a few functions for binning a genome, and reading HiC maps
 
 <h3>Installation</h3> 
