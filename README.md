@@ -26,11 +26,12 @@ The script run_reproducibility.jl is used to get the reproducibility score from 
 > julia run_reproducibility.jl matrix_file1 matrix_file2 
 
 The input file here is a simple text delimited format with no header.
-1 1 20
-1 2 18
+
+1 1 20\\
+1 2 18\\
 ...
 
-The first and second columns represent the row and column indices of a contact map, whereas the third column is the count. 
+The first and second columns represent the row and column indices of a contact map, whereas the third column is the count. To represent a full matrix, only the upper-triangular component is required. Note that the index should begin with 1. 
 
 Please refer to ./data/readme_data for the format of the input files
 
