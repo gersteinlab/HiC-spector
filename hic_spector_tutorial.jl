@@ -46,15 +46,15 @@ for chr_num=2:23;
 	#we therefore do M=M+M'.
 	#neveetheless, it's not necessary because the code get_reproducibility(M1,M2,num_evec) does it for you
 	
-	#evs,a1,a2=get_reproducibility(M1,M2,r);
-	#Q[chr_num]=evs;
+	evs,a1,a2=get_reproducibility(M1,M2,r);
+	Q[chr_num]=evs;
 
 	#######the next few lines can be used for benchmark##############
-	info=@timed get_reproducibility(M1,M2,r);
-	evs=info[1][1];
-	Q[chr_num]=mean(evs);
-	elasped_time[chr_num]=info[2];
-	mem[chr_num]=info[3];
+	#info=@timed get_reproducibility(M1,M2,r);
+	#evs=info[1][1];
+	#Q[chr_num]=mean(evs);
+	#elasped_time[chr_num]=info[2];
+	#mem[chr_num]=info[3];
 
 end
 
