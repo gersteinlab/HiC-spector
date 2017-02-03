@@ -19,7 +19,7 @@ and a few functions for binning a genome, and reading HiC maps
 <h3>Installation</h3> 
 HiC-spector is mostly written in Julia. It has been tested in Julia 0.4 and 0.5. Both the Julia language (http://julialang.org/) and the required packages have to be installed. Please refer to the beginning of the file HiC_spector.jl for the necessary packages. To get some contact maps for testing the code, please follow the instructions shown in the file data/readme_data.
 
-There is a Python script available for quantifying reproducibility. The python version can read files in .hic format (https://github.com/theaidenlab/juicebox/wiki/Data). To do so, please download the python version of the tool straw (straw.py) developed by the Aiden lab (https://github.com/theaidenlab/straw).
+There is a Python script available for quantifying reproducibility. The Python version can read files in .hic format (https://github.com/theaidenlab/juicebox/wiki/Data). To do so, please download the Python version of the tool straw (straw.py) developed by the Aiden lab (https://github.com/theaidenlab/straw).
 
 <h3>Usage</h3>
 The script run_reproducibility.jl is used to get the reproducibility score from a command-line interface. Usage:
@@ -43,10 +43,14 @@ Julia users can include the file HiC_spector.jl for their own analysis by simply
 Please refer to the file hic_spector_tutorial.jl for how to use some of the functions and how to read files in other formats.
 
 For non-Julia users, one can use the Python script run_reproducibility.py to obtain the reproducibility score. Usage:
-> python run_reproducibility.py matrix_file1 matrix_file2
+> python run_reproducibility.py -F matrix_file1 matrix_file2
 
-In addition to the text delimited input files, the python script can calculate reproducibility score for contact maps stored in .hic format. Usage:
->
+In addition to the text delimited input files, the Python script can calculate reproducibility score for contact maps stored in .hic format. Usage:
+> python run_reproducibility.py -f hic_file1 hic_file2 chrid resolution
+
+A script is provided in the tool straw (https://github.com/theaidenlab/straw/tree/master/python) for reading the headers (including chr id and the available resolutions) in .hic file. 
+
+Regarding memory, given two contact maps of human chr1 binned in a bin-size of 10kb, the code works fine in a laptop (16GB memory) from our experience. 
 
 <h3>Aurthor/Support</h3>
 Koon-Kiu Yan, koon-kiu.yan@yale.edu; Chengfei Yan, chengfei.yan@yale.edu
