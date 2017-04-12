@@ -53,7 +53,7 @@ A script is provided in the tool straw (https://github.com/theaidenlab/straw/tre
 Regarding memory, given two contact maps of human chr1 binned in a bin-size of 10kb, the code works fine in a laptop (16GB memory) from our experience. 
 
 <h3>Aurthor/Support</h3>
-Koon-Kiu Yan, koon-kiu.yan@yale.edu; Chengfei Yan, chengfei.yan@yale.edu
+Koon-Kiu Yan, koonkiu.yan@gmail.com; Mark Gerstein, mark@gersteinlab.org
 
 <h3>Reference</h3>
 Yan KK, Galip Gürkan Yardımcı, William S Noble and Gerstein M. HiC-Spector: a matrix library for spectral and reproducibility analysis of Hi-C contact maps. bioRxiv https://doi.org/10.1101/088922
