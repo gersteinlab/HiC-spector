@@ -56,4 +56,4 @@ Regarding memory, given two contact maps of human chr1 binned in a bin-size of 1
 Koon-Kiu Yan, koonkiu.yan@gmail.com; Mark Gerstein, mark@gersteinlab.org
 
 <h3>Reference</h3>
-Yan KK, Galip Gürkan Yardımcı, William S Noble and Gerstein M. HiC-Spector: a matrix library for spectral and reproducibility analysis of Hi-C contact maps. Bioinformatics 22 March 2017. DOI: https://doi.org/10.1093/bioinformatics/btx152
+Yan KK, Galip Gürkan Yardımcı, William S Noble and Gerstein M. HiC-Spector: a matrix library for spectral and reproducibility analysis of Hi-C contact maps. Bioinformatics 22 March 2017. https://doi.org/10.1093/bioinformatics/btx152
