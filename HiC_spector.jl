@@ -10,13 +10,14 @@ function get_reproducibility(M1,M2,num_evec);
 
 	if ~isequal(M1,M1')
 		tmp1=M1-spdiagm(diag(M1));
-		M1=tmp1+tmp1'+diagm(diag(M1));
+		M1=tmp1+tmp1'+spdiagm(diag(M1));
 	end
 	if ~isequal(M2,M2')
 		tmp2=M2-spdiagm(diag(M2));
-		M2=tmp2+tmp2'+diagm(diag(M2));
+		M2=tmp2+tmp2'+spdiagm(diag(M2));
 	end
 
+	#get rid of isolated nodes
 	k1=sum(spones(M1),2);
 	d1=diag(M1);
 	kd1=!((k1.==1).*(d1.>0))
@@ -37,16 +38,16 @@ function get_reproducibility(M1,M2,num_evec);
 	Ln1_nz1=get_Laplacian(M1b);
 	Ln2_nz2=get_Laplacian(M2b);
 
-	(a1,b1)=eigs(speye(length(i_nz1))-Ln1_nz1,nev=num_evec,which=:LM);
+	(a1,b1)=eigs(speye(length(i_nz1))-Ln1_nz1,nev=num_evec+1,which=:LM);
 	a1=1-a1;
-	(a2,b2)=eigs(speye(length(i_nz2))-Ln2_nz2,nev=num_evec,which=:LM);
+	(a2,b2)=eigs(speye(length(i_nz2))-Ln2_nz2,nev=num_evec+1,which=:LM);
 	a2=1-a2;
 
 	ipr_cut=5;
 
 	b1_extend=zeros(size(M1b,1),num_evec);
 	for i=1:num_evec
-		b1_extend[i_nz1,i]=b1[:,i];
+		b1_extend[i_nz1,i]=b1[:,i+1];
 	end
 
 	ipr1=zeros(num_evec);
@@ -58,7 +59,7 @@ function get_reproducibility(M1,M2,num_evec);
 
 	b2_extend=zeros(size(M2b,1),num_evec);
 	for i=1:num_evec
-		b2_extend[i_nz2,i]=b2[:,i];
+		b2_extend[i_nz2,i]=b2[:,i+1];
 	end
 
 	ipr2=zeros(num_evec);
@@ -79,7 +80,7 @@ function get_reproducibility(M1,M2,num_evec);
 
 	evs=abs(sqrt(2)-Sd/num_evec_eff)/sqrt(2);
 
-	return evs,a1,a2;
+	return evs,a1,a2,evd;
 
 end
 
