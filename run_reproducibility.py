@@ -101,14 +101,14 @@ def get_reproducibility(M1,M2,num_evec):
    M1b_L=get_Laplacian(M1b)
    M2b_L=get_Laplacian(M2b)
    
-   a1, b1=eigsh(M1b_L,k=num_evec,which="SM")
-   a2, b2=eigsh(M2b_L,k=num_evec,which="SM")
+   a1, b1=eigsh(M1b_L,k=num_evec+1,which="SM")
+   a2, b2=eigsh(M2b_L,k=num_evec+1,which="SM")
    
    b1_extend=numpy.zeros((numpy.size(M1b,0),num_evec))
    b2_extend=numpy.zeros((numpy.size(M2b,0),num_evec))
    for i in range(num_evec):
-       b1_extend[i_nz1,i]=b1[:,i]
-       b2_extend[i_nz2,i]=b2[:,i]
+       b1_extend[i_nz1,i]=b1[:,i+1]
+       b2_extend[i_nz2,i]=b2[:,i+1]
    
    ipr_cut=5
    ipr1=numpy.zeros(num_evec)
