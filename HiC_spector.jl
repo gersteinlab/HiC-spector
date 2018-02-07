@@ -38,16 +38,19 @@ function get_reproducibility(M1,M2,num_evec);
 	Ln1_nz1=get_Laplacian(M1b);
 	Ln2_nz2=get_Laplacian(M2b);
 
-	(a1,b1)=eigs(speye(length(i_nz1))-Ln1_nz1,nev=num_evec+1,which=:LM);
+	#(a1,b1)=eigs(speye(length(i_nz1))-Ln1_nz1,nev=num_evec+1,which=:LM);
+	(a1,b1)=eigs(speye(length(i_nz1))-Ln1_nz1,nev=num_evec,which=:LM);
 	a1=1-a1;
-	(a2,b2)=eigs(speye(length(i_nz2))-Ln2_nz2,nev=num_evec+1,which=:LM);
+	#(a2,b2)=eigs(speye(length(i_nz2))-Ln2_nz2,nev=num_evec+1,which=:LM);
+	(a2,b2)=eigs(speye(length(i_nz2))-Ln2_nz2,nev=num_evec,which=:LM);	
 	a2=1-a2;
 
 	ipr_cut=5;
 
 	b1_extend=zeros(size(M1b,1),num_evec);
 	for i=1:num_evec
-		b1_extend[i_nz1,i]=b1[:,i+1];
+		#b1_extend[i_nz1,i]=b1[:,i+1];
+		b1_extend[i_nz1,i]=b1[:,i];
 	end
 
 	ipr1=zeros(num_evec);
@@ -59,7 +62,8 @@ function get_reproducibility(M1,M2,num_evec);
 
 	b2_extend=zeros(size(M2b,1),num_evec);
 	for i=1:num_evec
-		b2_extend[i_nz2,i]=b2[:,i+1];
+		#b2_extend[i_nz2,i]=b2[:,i+1];
+		b2_extend[i_nz2,i]=b2[:,i];
 	end
 
 	ipr2=zeros(num_evec);
@@ -70,6 +74,10 @@ function get_reproducibility(M1,M2,num_evec);
 	b2_extend_eff=b2_extend[:,ipr2.>ipr_cut];
 
 	num_evec_eff=minimum([size(b1_extend_eff,2);size(b2_extend_eff,2)]);
+
+	#num_evec_eff=num_evec;
+	#b1_extend_eff=b1_extend;
+	#b2_extend_eff=b2_extend;
 
 	evd=zeros(num_evec_eff);
 	for i=1:num_evec_eff;
@@ -505,7 +513,7 @@ function change_chr(hg19_info,chr)
 	if typeof(chr)==Float64||typeof(chr)==Int64;
 		chr2=hg19_info[:chr][hg19_info[:id].==chr][1];
 	elseif typeof(chr)==ASCIIString||typeof(chr)==SubString{ASCIIString}||typeof(chr)==UTF8String
-		chr2=hg19_infp[:id][hg19_info[:chr].==chr][1];
+		chr2=hg19_info[:id][hg19_info[:chr].==chr][1];
 	end
 
 	return chr2;
