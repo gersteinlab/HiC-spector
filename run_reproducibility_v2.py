@@ -4,6 +4,7 @@ import numpy
 import straw
 from scipy.sparse import lil_matrix
 from scipy.sparse.linalg import eigsh
+
 def Parse_matrix(file1,file2):
   max_index=0
   max_index_temp=0
@@ -35,6 +36,46 @@ def Parse_matrix(file1,file2):
         M2[x-1,y-1]=z
         M2[y-1,x-1]=z
   return M1, M2 
+
+
+def Parse_matrix_lieberman(file1,file2, resolution):
+  max_index=0
+  max_index_temp=0
+  with open(file1) as input_file:
+    for line in input_file:
+      if line[0]!="#":  
+        x,y,z=map(int, line.split())
+        max_index_temp=max(x,y)
+        if max_index_temp>max_index:
+               max_index=max_index_temp
+  
+  with open(file2) as input_file:
+    for line in input_file:
+      
+      if line[0]!="#":  
+        x,y,z=map(int, line.split())
+        max_index_temp=max(x,y)
+        if max_index_temp>max_index:
+               max_index=max_index_temp
+
+  max_index=max_index/resolution+1
+  print(max_index)
+  M1=lil_matrix((max_index,max_index))
+  M2=lil_matrix((max_index,max_index))
+  with open(file1) as input_file:
+    for line in input_file:
+      if line[0]!="#":  
+        x,y,z=map(int, line.split())
+        M1[x/resolution,y/resolution]=z
+        M1[y/resolution,x/resolution]=z
+  with open(file2) as input_file:
+    for line in input_file:
+      if line[0]!="#":  
+        x,y,z=map(int, line.split())
+        M2[x/resolution,y/resolution]=z
+        M2[y/resolution,x/resolution]=z
+  return M1, M2 
+
 
 def Parse_matrix_hic(file1, file2, chrn, resolution):
     
@@ -101,14 +142,14 @@ def get_reproducibility(M1,M2,num_evec):
    M1b_L=get_Laplacian(M1b)
    M2b_L=get_Laplacian(M2b)
    
-   a1, b1=eigsh(M1b_L,k=num_evec+1,which="SM")
-   a2, b2=eigsh(M2b_L,k=num_evec+1,which="SM")
+   a1, b1=eigsh(M1b_L,k=num_evec,which="SM")
+   a2, b2=eigsh(M2b_L,k=num_evec,which="SM")
    
    b1_extend=numpy.zeros((numpy.size(M1b,0),num_evec))
    b2_extend=numpy.zeros((numpy.size(M2b,0),num_evec))
    for i in range(num_evec):
-       b1_extend[i_nz1,i]=b1[:,i+1]
-       b2_extend[i_nz2,i]=b2[:,i+1]
+       b1_extend[i_nz1,i]=b1[:,i]
+       b2_extend[i_nz2,i]=b2[:,i]
    
    ipr_cut=5
    ipr1=numpy.zeros(num_evec)
@@ -120,8 +161,7 @@ def get_reproducibility(M1,M2,num_evec):
    b1_extend_eff=b1_extend[:,ipr1>ipr_cut]
    b2_extend_eff=b2_extend[:,ipr2>ipr_cut]
    num_evec_eff=min(numpy.size(b1_extend_eff,1),numpy.size(b2_extend_eff,1))
-
-       
+  
    evd=numpy.zeros(num_evec_eff)
    for i in range(num_evec_eff):
        evd[i]=evec_distance(b1_extend_eff[:,i],b2_extend_eff[:,i])
@@ -129,25 +169,34 @@ def get_reproducibility(M1,M2,num_evec):
    Sd=evd.sum()
    l=numpy.sqrt(2)
    evs=abs(l-Sd/num_evec_eff)/l
-   print("size of maps: %d" %(numpy.size(M1,0)))
-   print("reproducibility score: %6.3f " %(evs))
 
+   N=float(M1.shape[1]);
+   if (numpy.sum(ipr1>N/100)<=1)|(numpy.sum(ipr2>N/100)<=1):
+      print("at least one of the maps does not look like typical Hi-C maps")
+   else:
+      print("size of maps: %d" %(numpy.size(M1,0)))
+      print("reproducibility score: %6.3f " %(evs))
+      print("num_evec_eff: %d" %(num_evec_eff))
 
 def main():
-    num_evec=20
+    num_evec=20;
     if len(sys.argv)==4 and sys.argv[1]=="-F":
         M1, M2=Parse_matrix(sys.argv[2],sys.argv[3])
         get_reproducibility(M1,M2,num_evec)
     elif len(sys.argv)==6 and sys.argv[1]=="-f":
         M1, M2=Parse_matrix_hic(sys.argv[2],sys.argv[3],sys.argv[4],int(sys.argv[5]))
         get_reproducibility(M1,M2,num_evec)
+    elif len(sys.argv)==5 and sys.argv[1]=="t":
+        M1, M2=Parse_matrix_lieberman(sys.argv[2],sys.argv[3],int(sys.argv[4]))
+        get_reproducibility(M1,M2,num_evec)
     else:
-      print('3 or 5 arguments required')
+      print('3, 4 or 5 arguments required')
       print('To use matrix table files as the input:')
       print('python run_reproducibility.py -F matrix_file1 matrix_file2')
       print('To use .hic files as the input:')
       print('python run_reproducibility.py -f hic_file1 hic_file2 chrid resolution[int]')
-      
+      print('To use lieberman matrix files as the input:')
+      print('python run_reproducibility.py t matrix_file1 matrix_file2 resolution[int]')
 
 
 if __name__ == '__main__':
