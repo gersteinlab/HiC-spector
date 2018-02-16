@@ -39,10 +39,10 @@ function get_reproducibility(M1,M2,num_evec);
 	Ln2_nz2=get_Laplacian(M2b);
 
 	(a1,b1)=eigs(speye(length(i_nz1))-Ln1_nz1,nev=num_evec,which=:LM);
-	#(a1,b1)=eigs(speye(length(i_nz1))-Ln1_nz1,nev=num_evec,which=:LM);
+	#(a1,b1)=eigs(speye(length(i_nz1))-Ln1_nz1,nev=num_evec+1,which=:LM);
 	a1=1-a1;
 	(a2,b2)=eigs(speye(length(i_nz2))-Ln2_nz2,nev=num_evec,which=:LM);
-	#(a2,b2)=eigs(speye(length(i_nz2))-Ln2_nz2,nev=num_evec,which=:LM);	
+	#(a2,b2)=eigs(speye(length(i_nz2))-Ln2_nz2,nev=num_evec+1,which=:LM);	
 	a2=1-a2;
 
 	ipr_cut=5;
@@ -75,9 +75,6 @@ function get_reproducibility(M1,M2,num_evec);
 
 	num_evec_eff=minimum([size(b1_extend_eff,2);size(b2_extend_eff,2)]);
 
-	#num_evec_eff=num_evec;
-	#b1_extend_eff=b1_extend;
-	#b2_extend_eff=b2_extend;
 
 	evd=zeros(num_evec_eff);
 	for i=1:num_evec_eff;
