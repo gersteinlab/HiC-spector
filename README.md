@@ -47,6 +47,7 @@ For non-Julia users, one can use the Python script run_reproducibility.py to obt
 
 If the matrix files are labeled in genomic coordinates of bins, USage:
 > python run_reproducibility.py t matrix_file1 matrix_file2 40000
+
 where 40000 is the bin size used in the two files
 
 In addition to the text delimited input files, the Python script can calculate reproducibility score for contact maps stored in .hic format. Usage:
