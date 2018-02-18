@@ -16,7 +16,8 @@ function get_reproducibility(M1,M2,num_evec);
 		tmp2=M2-spdiagm(diag(M2));
 		M2=tmp2+tmp2'+spdiagm(diag(M2));
 	end
-
+	
+	N=size(M1)[1];
 	#get rid of isolated nodes
 	k1=sum(spones(M1),2);
 	d1=diag(M1);
@@ -84,6 +85,11 @@ function get_reproducibility(M1,M2,num_evec);
 	Sd=sum(evd);
 
 	evs=abs(sqrt(2)-Sd/num_evec_eff)/sqrt(2);
+	
+	if (sum(ipr1>N/100)<=1)|(sum(ipr2/N>100)<=1)
+		print("at least one of the maps does not look like typical Hi-C maps")
+		evs=NaN;
+	end
 
 	return evs,a1,a2,evd;
 
