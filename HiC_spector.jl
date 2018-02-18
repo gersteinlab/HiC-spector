@@ -86,7 +86,7 @@ function get_reproducibility(M1,M2,num_evec);
 
 	evs=abs(sqrt(2)-Sd/num_evec_eff)/sqrt(2);
 	
-	if (sum(ipr1>N/100)<=1)|(sum(ipr2>N/100)<=1)
+	if (sum(ipr1.>N/100)<=1)|(sum(ipr2.>N/100)<=1)
 		print("at least one of the maps does not look like typical Hi-C maps")
 		evs=NaN;
 	end
