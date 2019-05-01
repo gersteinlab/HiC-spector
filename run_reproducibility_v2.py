@@ -82,7 +82,7 @@ def Parse_matrix_hic(file1, file2, chrn, resolution):
     Table1=straw.straw("NONE",file1, chrn, chrn,"BP",resolution)
     Table2=straw.straw("NONE",file2, chrn, chrn,"BP",resolution)
     max_index=max(max(Table1[0]),max(Table1[1]),max(Table2[0]),max(Table2[1]))
-    max_index=max_index/resolution
+    max_index=int(max_index/resolution)
     M1=lil_matrix((max_index+1,max_index+1))
     M2=lil_matrix((max_index+1,max_index+1))
                      
