@@ -177,6 +177,7 @@ def get_reproducibility(M1,M2,num_evec):
       print("size of maps: %d" %(numpy.size(M1,0)))
       print("reproducibility score: %6.3f " %(evs))
       print("num_evec_eff: %d" %(num_evec_eff))
+   return evs
 
 def main():
     num_evec=20;
